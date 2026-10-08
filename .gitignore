@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 本地 issue tracker / agent 临时目录
+.scratch/
+
+# Trae / OpenSpec 生成物
+.trae/
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# 子应用 standalone 构建产物
+packages/*/dist/

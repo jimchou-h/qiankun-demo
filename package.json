@@ -1,0 +1,41 @@
+{
+  "name": "qiankun-demo",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "qiankun 微前端 demo：父应用 Vue3 + Ant Design Vue 4，子应用混合 Vue2/Vue3 + antd/element 多 UI 库",
+  "scripts": {
+    "dev": "vite",
+    "dev:sub-vue3-antd4": "pnpm --filter sub-vue3-antd4 dev",
+    "dev:all": "npm-run-all2 --parallel dev dev:sub-vue3-antd4",
+    "build": "vite build",
+    "build:all": "npm-run-all2 --parallel build build:sub-vue3-antd4",
+    "build:sub-vue3-antd4": "pnpm --filter sub-vue3-antd4 build:standalone",
+    "install:all": "pnpm install"
+  },
+  "dependencies": {
+    "ant-design-vue": "^4.2.6",
+    "pinia": "^2.2.4",
+    "vue": "^3.4.21",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@vitejs/plugin-vue": "^4.6.2",
+    "npm-run-all2": "^6.2.3",
+    "typescript": "~5.4.5",
+    "vite": "^4.5.5",
+    "vue-tsc": "^1.8.27"
+  },
+  "pnpm": {
+    "overrides": {
+      "vue@^3": "3.4.21",
+      "vue-router@^4": "4.2.5"
+    },
+    "onlyBuiltDependencies": [
+      "core-js",
+      "esbuild",
+      "vue-demi"
+    ]
+  }
+}
