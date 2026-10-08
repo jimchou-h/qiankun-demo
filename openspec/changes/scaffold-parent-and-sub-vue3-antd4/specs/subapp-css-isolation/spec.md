@@ -21,12 +21,17 @@ sub-vue3-antd4 子应用 SHALL 在 `postcss.config.js` 配置 `postcss-prefix-se
 
 ### Requirement: PostCSS keyframes 改名
 
-sub-vue3-antd4 SHALL 配置 `postcss-rename-keyframes`，给所有 `@keyframes` 名加 `sub-vue3-antd4-` 前缀，避免与其他子应用的动画名冲突。
+sub-vue3-antd4 SHALL 通过**子应用内维护的本地 PostCSS 插件** `postcss-prefix-keyframes.cjs` 给所有 `@keyframes` 名加 `sub-vue3-antd4-` 前缀，并 MUST 同步改写 `animation` / `animation-name` 声明中对该动画名的引用，避免与其他子应用的动画名冲突。插件 MUST 幂等（已带前缀的名称不重复添加）。SHALL NOT 依赖外部 npm 包（`postcss-rename-keyframes` 在 npm 上不存在）。
 
 #### Scenario: 业务 keyframes 被改名
 
 - **WHEN** sub-vue3-antd4 业务 CSS 定义 `@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`，并通过 `animation: fadeIn 0.3s` 引用
 - **THEN** 构建产物 CSS 中 `@keyframes` 名为 `sub-vue3-antd4-fadeIn`，且 `animation` 引用同步改为 `sub-vue3-antd4-fadeIn 0.3s`
+
+#### Scenario: 已带前缀的 keyframes 不被重复改名
+
+- **WHEN** CSS 中已存在 `@keyframes sub-vue3-antd4-fadeIn`
+- **THEN** 构建产物中该名称保持不变（不变成 `sub-vue3-antd4-sub-vue3-antd4-fadeIn`）
 
 ### Requirement: antd4 namespace prefixCls（第 2 层防护）
 

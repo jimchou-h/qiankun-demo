@@ -57,7 +57,8 @@
 ### D4: CSS 隔离三层防护——PostCSS prefix + UI namespace + z-index 基数
 
 **选择**：
-1. **PostCSS `postcss-prefix-selector`** 给所有子应用 CSS 选择器加 `[data-app="sub-xxx"]` 前缀，`transform` 函数跳过 `body/html/:root/*` 全局选择器；不排除 `node_modules` 的 antd/element 样式（要一起改写）。配合 `postcss-rename-keyframes` 给 keyframes 名加 `sub-vue3-antd4-` 前缀（避免动画名冲突）
+1. **PostCSS `postcss-prefix-selector`** 给所有子应用 CSS 选择器加 `[data-app="sub-xxx"]` 前缀，`transform` 函数跳过 `body/html/:root/*` 全局选择器；不排除 `node_modules` 的 antd/element 样式（要一起改写）。keyframes 名加 `sub-vue3-antd4-` 前缀（避免动画名冲突）由一个**子应用内维护的本地 PostCSS 插件** `postcss-prefix-keyframes.cjs` 完成（约 15 行，遍历 `@keyframes` atRule 改名并同步改写 `animation` / `animation-name` 声明引用）
+   - **为什么不用 npm 包**：原设计指定的 `postcss-rename-keyframes` 在 npm 上不存在（404）；`postcss-prefix-keyframe` 仅有 0.0.1 陈旧版本，不可用。本地插件逻辑简单且完全可控，优于引入死包
 2. **UI 库 namespace**：antd4 `<a-config-provider prefix-cls="a4-">` 把所有 `ant-*` 改 `a4-*`；element-plus 后续 change 用 `namespace="ep"` 改 `--el-*` 为 `--ep-*`
 3. **z-index 基数**：父根 1000，sub1 根 2000，子应用根 div 加 `position: relative; z-index: <基数>` 创建独立 stacking context，弹窗 z-index 不会跨子应用穿透
 

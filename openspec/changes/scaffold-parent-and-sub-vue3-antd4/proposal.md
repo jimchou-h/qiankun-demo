@@ -41,7 +41,7 @@
 ## Impact
 
 - **新增代码**：项目根 `package.json` / `pnpm-workspace.yaml` / `vite.config.ts` / `index.html` / `src/`；`packages/sub-vue3-antd4/` 整套子应用代码
-- **依赖**：Vue 3.4.21、Vue Router 4.2.5、Ant Design Vue 4、Pinia、qiankun 2.10+、vite-plugin-qiankun、postcss-prefix-selector、postcss-rename-keyframes、vue-i18n 9、axios、npm-run-all2、pnpm 10+
+- **依赖**：Vue 3.4.21、Vue Router 4.2.5、Ant Design Vue 4、Pinia、qiankun 2.10+、vite-plugin-qiankun、postcss-prefix-selector、vue-i18n 9、axios、npm-run-all2、pnpm 10+（keyframes 改名用子应用内维护的本地 PostCSS 插件，不引入 npm 包）
 - **版本约束**：根 `pnpm.overrides` 强制 `vue@^3` = 3.4.21（后续 sub2/sub4 接入时再补 `vue@^2` = 2.7.14、`vue-router@^3` = 3.6.5）
 - **不受影响**：sub-vue2-antd1 / sub-vue3-element-plus / sub-vue2-element-ui 子应用（后续 change）、主题切换运行时实现、i18n 完整文案库、错误处理 10s 超时重试、性能监控 sendBeacon 上报、prod 部署
 - **风险点**：vite-plugin-qiankun 与 Vite 4 兼容性、antd4 在 `prefix-cls="a4-"` + PostCSS 双重前缀下样式完整性、portal 类组件 getContainer 改造在 antd4 全组件覆盖度
