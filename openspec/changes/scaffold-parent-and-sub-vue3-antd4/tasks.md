@@ -17,15 +17,15 @@
 
 端到端目标：`pnpm dev:sub-vue3-antd4` 独立启动子应用，访问 `http://localhost:5801/home` 显示 antd4 Button + Modal 触发器，零 qiankun 依赖。
 
-- [ ] 2.1 创建 `packages/sub-vue3-antd4/package.json`（name=`sub-vue3-antd4`，dependencies 含 `vue@^3.4.21`、`vue-router@^4.2.5`、`pinia`、`ant-design-vue@^4`、`vue-i18n@^9`、`axios`，devDependencies 含 `vite`、`@vitejs/plugin-vue`、`vite-plugin-qiankun`、`postcss`、`postcss-prefix-selector`、`postcss-rename-keyframes`）
-- [ ] 2.2 创建 `packages/sub-vue3-antd4/vite.config.ts`（端口 5801，`server.headers['Access-Control-Allow-Origin']='*'`，`vite-plugin-qiankun` 配 `mainSPId:'sub-vue3-antd4'`，`useDevMode: true`）
-- [ ] 2.3 创建 `packages/sub-vue3-antd4/index.html`（挂载点 `<div id="app">`，引入 `/src/main.ts`）
-- [ ] 2.4 创建 `src/main.ts`（判断 `__POWERED_BY_QIANKUN__`：standalone 直接 createApp + mount；qiankun 模式 export `bootstrap/mount/unmount` 生命周期函数）
-- [ ] 2.5 创建 `src/App.vue`（根 div + `<a-config-provider prefix-cls="a4-">` 包裹 `<router-view />`）
-- [ ] 2.6 创建 `src/views/Home.vue`（`<a-button>open modal</a-button>` + `<a-modal v-model:open="visible">demo</a-modal>`）
-- [ ] 2.7 创建 `src/views/About.vue`（`<a-input />` + `<a-select />` 含若干选项）
-- [ ] 2.8 创建 `src/router/index.ts`（`createWebHistory('/')`，路由表 `/home` → Home.vue、`/about` → About.vue）
-- [ ] 2.9 验收：`pnpm install` + `pnpm dev:sub-vue3-antd4` 启动，访问 `:5801/home` 显示 antd4 Button，点击弹出 Modal（此时 Modal 挂到 body，**未做隔离**，下一个 task 修复）
+- [x] 2.1 创建 `packages/sub-vue3-antd4/package.json`（name=`sub-vue3-antd4`，dependencies 含 `vue@^3.4.21`、`vue-router@^4.2.5`、`pinia`、`ant-design-vue@^4`、`vue-i18n@^9`、`axios`，devDependencies 含 `vite`、`@vitejs/plugin-vue`、`vite-plugin-qiankun`、`postcss`、`postcss-prefix-selector`）
+- [x] 2.2 创建 `packages/sub-vue3-antd4/vite.config.ts`（端口 5801，`server.headers['Access-Control-Allow-Origin']='*'`，`vite-plugin-qiankun` 配 `useDevMode: true`；mainSPId 由插件首个参数传入子应用 name）
+- [x] 2.3 创建 `packages/sub-vue3-antd4/index.html`（挂载点 `<div id="app">`，引入 `/src/main.ts`）
+- [x] 2.4 创建 `src/main.ts`（判断 `__POWERED_BY_QIANKUN__`：standalone 直接 createApp + mount；qiankun 模式 export `bootstrap/mount/unmount` 生命周期函数）
+- [x] 2.5 创建 `src/App.vue`（根 div + `<a-config-provider prefix-cls="a4-">` 包裹 `<router-view />`）
+- [x] 2.6 创建 `src/views/Home.vue`（`<a-button>open modal</a-button>` + `<a-modal v-model:open="visible">demo</a-modal>`）
+- [x] 2.7 创建 `src/views/About.vue`（`<a-input />` + `<a-select />` 含若干选项）
+- [x] 2.8 创建 `src/router/index.ts`（`createAppRouter(base='/')` 工厂封装 `createWebHistory(base)`，路由表 `/home` → Home.vue、`/about` → About.vue；base 便于后续 qiankun 集成模式注入）
+- [x] 2.9 验收：`pnpm install` + `pnpm dev:sub-vue3-antd4` 启动，访问 `:5801/home` 显示 antd4 Button，点击弹出 Modal（此时 Modal 挂到 body，**未做隔离**，下一个 task 修复）
 
 ## 3. sub-vue3-antd4 CSS 隔离三层防护
 

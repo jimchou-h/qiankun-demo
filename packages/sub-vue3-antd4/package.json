@@ -1,0 +1,30 @@
+{
+  "name": "sub-vue3-antd4",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "子应用 sub1：Vue3 + Ant Design Vue 4，支持 qiankun 集成与独立访问",
+  "scripts": {
+    "dev": "vite",
+    "build:standalone": "vite build",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "ant-design-vue": "^4.2.6",
+    "axios": "^1.7.7",
+    "pinia": "^2.2.4",
+    "vue": "^3.4.21",
+    "vue-i18n": "^9.14.0",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@vitejs/plugin-vue": "^4.6.2",
+    "postcss": "^8.4.47",
+    "postcss-prefix-selector": "^2.0.0",
+    "typescript": "~5.4.5",
+    "vite": "^4.5.5",
+    "vite-plugin-qiankun": "^1.0.15",
+    "vue-tsc": "^1.8.27"
+  }
+}
