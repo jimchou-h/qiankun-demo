@@ -35,7 +35,7 @@ sub-vue3-antd4 SHALL 通过**子应用内维护的本地 PostCSS 插件** `postc
 
 ### Requirement: antd4 namespace prefixCls（第 2 层防护）
 
-sub-vue3-antd4 SHALL 在根 `<a-config-provider prefix-cls="a4-">` 设置 antd4 prefixCls，所有 antd4 组件 class 名从 `ant-*` 改为 `a4-*`。MUST 在 App.vue 根用 `<a-config-provider>` 包裹全部内容。
+sub-vue3-antd4 SHALL 在根 `<a-config-provider prefix-cls="a4">` 设置 antd4 prefixCls，所有 antd4 组件 class 名从 `ant-*` 改为 `a4-*`。MUST 传 `a4` 而非 `a4-`：antd4 `getPrefixCls(suffix)` 返回 `` `${prefixCls}-${suffix}` ``，传 `a4-` 会得到 `a4--btn` 双横线。MUST 在 App.vue 根用 `<a-config-provider>` 包裹全部内容。
 
 #### Scenario: antd4 组件 class 带 a4- 前缀
 
@@ -67,7 +67,7 @@ sub-vue3-antd4 根 div SHALL 设置 `position: relative; z-index: 2000`，创建
 
 ### Requirement: 弹窗挂载点改造（第 3 层防护）
 
-sub-vue3-antd4 SHALL 通过 antd4 公开 API 单点指定弹层挂载点：在 `App.vue` 的 `<a-config-provider prefix-cls="a4-" :get-popup-container="getAppContainer">` 传入 `getAppContainer`，使所有弹层组件 DOM 挂载到 `[data-app="sub-vue3-antd4"]` 子应用根容器而非 `document.body`。`getAppContainer` SHALL 返回 `document.querySelector('[data-app="sub-vue3-antd4"]')`，元素不存在时 fallback `document.body`。
+sub-vue3-antd4 SHALL 通过 antd4 公开 API 单点指定弹层挂载点：在 `App.vue` 的 `<a-config-provider prefix-cls="a4" :get-popup-container="getAppContainer">` 传入 `getAppContainer`，使所有弹层组件 DOM 挂载到 `[data-app="sub-vue3-antd4"]` 子应用根容器而非 `document.body`。`getAppContainer` SHALL 返回 `document.querySelector('[data-app="sub-vue3-antd4"]')`，元素不存在时 fallback `document.body`。
 
 覆盖范围 MUST 包含全部 10 个组件：`Modal`、`Drawer`、`Tooltip`、`Popover`、`Dropdown`、`Select`、`DatePicker`、`Cascader`、`TreeSelect`、`Popconfirm`（antd4 中 `Modal`/`Drawer` 自身 `getContainer` 未传时 fallback 到 ConfigProvider 的 `getPopupContainer`，其余组件经 `useConfigInject` 读取同一值）。
 

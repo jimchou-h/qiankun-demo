@@ -59,7 +59,7 @@
 **选择**：
 1. **PostCSS `postcss-prefix-selector`** 给所有子应用 CSS 选择器加 `[data-app="sub-xxx"]` 前缀，`transform` 函数跳过 `body/html/:root/*` 全局选择器；不排除 `node_modules` 的 antd/element 样式（要一起改写）。keyframes 名加 `sub-vue3-antd4-` 前缀（避免动画名冲突）由一个**子应用内维护的本地 PostCSS 插件** `postcss-prefix-keyframes.cjs` 完成（约 15 行，遍历 `@keyframes` atRule 改名并同步改写 `animation` / `animation-name` 声明引用）
    - **为什么不用 npm 包**：原设计指定的 `postcss-rename-keyframes` 在 npm 上不存在（404）；`postcss-prefix-keyframe` 仅有 0.0.1 陈旧版本，不可用。本地插件逻辑简单且完全可控，优于引入死包
-2. **UI 库 namespace**：antd4 `<a-config-provider prefix-cls="a4-">` 把所有 `ant-*` 改 `a4-*`；element-plus 后续 change 用 `namespace="ep"` 改 `--el-*` 为 `--ep-*`
+2. **UI 库 namespace**：antd4 `<a-config-provider prefix-cls="a4">` 把所有 `ant-*` 改 `a4-*`（antd4 `getPrefixCls(suffix)` 返回 `` `${prefixCls}-${suffix}` ``，故 MUST 传 `a4` 而非 `a4-`，否则得到 `a4--btn` 双横线）；element-plus 后续 change 用 `namespace="ep"` 改 `--el-*` 为 `--ep-*`
 3. **z-index 基数**：父根 1000，sub1 根 2000，子应用根 div 加 `position: relative; z-index: <基数>` 创建独立 stacking context，弹窗 z-index 不会跨子应用穿透
 
 **理由**：qiankun 内置 `strictStyleIsolation`（Shadow DOM）有兼容性问题（已被否决），`experimentalStyleIsolation` 在动态插入 body 的弹窗场景失效；自主方案可控、可调试、可独立验证。
@@ -67,7 +67,7 @@
 
 ### D5: 弹窗挂载点改造——ConfigProvider `getPopupContainer` 单点配置
 
-**选择**：sub1 在 `App.vue` 用 `<a-config-provider prefix-cls="a4-" :get-popup-container="getAppContainer">` 统一指定弹层挂载点，`getAppContainer = () => document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`。弹层组件（`Modal` / `Drawer` / `Tooltip` / `Popover` / `Dropdown` / `Select` / `DatePicker` / `Cascader` / `TreeSelect` / `Popconfirm`）全部由此单点配置覆盖，业务代码无需逐个传参。`message` / `notification` / `Modal.confirm` 函数式 API 通过 `<a-app>` + `App.useApp()` 提供 appContext。
+**选择**：sub1 在 `App.vue` 用 `<a-config-provider prefix-cls="a4" :get-popup-container="getAppContainer">` 统一指定弹层挂载点，`getAppContainer = () => document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`。弹层组件（`Modal` / `Drawer` / `Tooltip` / `Popover` / `Dropdown` / `Select` / `DatePicker` / `Cascader` / `TreeSelect` / `Popconfirm`）全部由此单点配置覆盖，业务代码无需逐个传参。`message` / `notification` / `Modal.confirm` 函数式 API 通过 `<a-app>` + `App.useApp()` 提供 appContext。
 **理由**：实测 antd4 4.2.6 源码，`Modal` 自身 `getContainer` 未传时 fallback 到 config context 的 `getPopupContainer`（`es/modal/Modal.js`：`getContainer: getContainer || getPopupContainer?.value`），`Drawer` 同理（`es/drawer/index.js` 的 `getContainer` computed）；弹层类 8 个组件经 `useConfigInject` 读取同一 context 值（`es/select/index.js`、`es/date-picker/generatePicker/generateSinglePicker.js`、`es/tooltip/Tooltip.js`）。故单点配置即覆盖全部 10 个组件。
 **替代方案**：
 - 改写组件 `props.*.default`（上一版方案，已否决）：实测 `Tooltip` / `Popover` / `Dropdown` / `Popconfirm` 的 `getPopupContainer` prop 在 antd4 中是**裸 `Function` 构造器**（`es/tooltip/abstractTooltipProps.js`：`getPopupContainer: Function`），赋值 `.default` 会污染全局 `Function` 且对组件无效；只有 `Modal` / `Drawer` / `Select` / `DatePicker` / `Cascader` / `TreeSelect` 的 prop 为可写描述符，两类行为不一致，否决。
@@ -91,10 +91,24 @@
 **选择**：sub1 `mount` 时初始化 `cleanupList: (() => void)[] = []`，`unmount` 时反向遍历执行；本 change 只在骨架里 register 一个 `console.log('cleanup demo')` 占位清理函数。完整清理（ECharts/视频/BPMN/WebSocket/Web Worker/axios abort）在后续 change 补。
 **理由**：cleanupList 是横切到所有子应用的模式，本 change 验证模式可行即可，避免提前实现无人使用的清理逻辑。
 
+### D9: qiankun JS 沙箱在 dev 模式的边界（裸 window 不隔离）
+
+**现象**：dev 模式下子应用模块代码里的裸 `window.__test__ = 1` 落在**真实 window**，切回父路由后仍可读到；同时 `window.proxy` 存在（object）、`__POWERED_BY_QIANKUN__` 为 true。
+**根因**：vite-plugin-qiankun dev 模式把子应用 entry 改写为 ESM 动态 `import()`，模块在浏览器模块作用域求值，其 `window` 即真实 window，不经过 qiankun `execScripts` 生成的代理包裹；`start({ sandbox: true })` 的 ProxySandbox 仍被创建（`window.proxy` 由 import-html-entry 挂在真实 window 上），但模块代码不通过它访问全局。
+**选择**：dev 保留 `sandbox: true` 不变；子应用需要读写全局时 MUST 经 `qiankunWindow`（`vite-plugin-qiankun/dist/helper` 内部读 `window.proxy || window`）。裸 `window` 的强隔离强度改由 prod 产物验证（7.9 验收：打包为 bundle 后经 `execScripts` 的 `with(window)` + proxy 包裹执行）。
+**Trade-off**：dev 下无法用裸 `window` 验证沙箱隔离强度，该验证挪到 prod 阶段。
+
+### D10: 父应用 vue-router 在子应用路由切换时打印 `No match found`（已知良性副作用）
+
+**现象**：子应用发生路由跳转时，父应用控制台打印 `[Vue Router warn]: No match found for location with path "/home"`。
+**根因**：qiankun 包装 `history.replaceState` / `pushState`（`qiankun.js` `History.replaceState`）在调用原生方法后**同步派发 popstate**；该事件被父应用 vue-router 的 `popStateHandler` 捕获，用当前 URL 派生出子应用的路由片段去父路由表 `resolve`，因无匹配而告警。
+**选择**：判定为良性副作用，**不改代码**（页面渲染与父/子路由跳转均已实测正常）。
+**替代方案**：父路由表加 `/:pathMatch(.*)*` 兜底吞掉告警——引入语义含糊的兜底路由，收益低于成本，否决。
+
 ## Risks / Trade-offs
 
 - **[Risk] vite-plugin-qiankun 与 Vite 4 兼容性** → Mitigation：先用 Vite 4，若 plugin 报错降级到 Vite 3.x；本 change 验证 plugin 路径可行后再扩展到 sub3
-- **[Risk] antd4 在 `prefix-cls="a4-"` + PostCSS 双重前缀下样式完整性** → Mitigation：手动验证 demo Modal / Button / Input / DatePicker 渲染正常；双重前缀理论无冲突（PostCSS 改选择器，prefix-cls 改 class 名），但 antd4 内部 CSS-in-JS 注入的 `<style>` 可能不被 PostCSS 处理（因 PostCSS 只处理 .css 文件），需观察实际产物
+- **[Risk] antd4 在 `prefix-cls="a4"` + PostCSS 双重前缀下样式完整性** → Mitigation：手动验证 demo Modal / Button / Input / DatePicker 渲染正常；双重前缀理论无冲突（PostCSS 改选择器，prefix-cls 改 class 名），但 antd4 内部 CSS-in-JS 注入的 `<style>` 可能不被 PostCSS 处理（因 PostCSS 只处理 .css 文件），需观察实际产物
 - **[Risk] antd4 `App.useApp()` 函数式 API（message/notification/Modal.confirm）的 getContainer** → Mitigation：用 `App.useApp()` 提供 appContext；仍不生效的函数式调用手动传 `getContainer` 参数
 - **[Risk] sub-vue3-antd4 dev 端口 5801 CORS** → Mitigation：Vite server 配 `headers: { 'Access-Control-Allow-Origin': '*' }`，父应用 fetch 子应用 entry 不被 CORS 拦
 - **[Risk] history 路由 base path 在 dev / prod 不一致** → Mitigation：dev 父用 `http://localhost:5801` 直接加载子应用，子应用 dev `base='/'`；prod 子应用 base 由父 props 注入 `/qiankun-demo/microapp/sub-vue3-antd4/`

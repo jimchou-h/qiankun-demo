@@ -4,6 +4,8 @@
       <a-space>
         <a-button type="primary" @click="openModal">open modal</a-button>
         <a-button @click="openDrawer">open drawer</a-button>
+        <!-- 子→父：经 qiankun setGlobalState 上报 msgNum，父应用 Layout 徽标 +1 -->
+        <a-button @click="reportToParent">report to parent</a-button>
       </a-space>
 
       <!-- 验证业务选择器被 PostCSS 加前缀 + @keyframes 改名 -->
@@ -26,6 +28,8 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { reportMsgNum } from '../qiankun/bridge'
+
 const { t } = useI18n()
 const visible = ref(false)
 const drawerVisible = ref(false)
@@ -36,6 +40,10 @@ function openModal() {
 
 function openDrawer() {
   drawerVisible.value = true
+}
+
+function reportToParent() {
+  reportMsgNum()
 }
 </script>
 

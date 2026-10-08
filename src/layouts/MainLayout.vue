@@ -13,6 +13,11 @@
         <a-menu-item key="/">父应用首页</a-menu-item>
         <a-menu-item key="/sub-vue3-antd4/home">sub-vue3-antd4</a-menu-item>
       </a-menu>
+
+      <!-- 子应用上报的 msgNum 徽标（数据源：qiankun initGlobalState → props.setGlobalState） -->
+      <a-badge class="main-msg-badge" :count="msgNum" :overflow-count="99">
+        <span class="main-msg-label">子应用消息</span>
+      </a-badge>
     </a-layout-header>
 
     <a-layout-content class="main-content">
@@ -28,9 +33,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+
+import { useAppStateStore } from '@/stores/appState'
 
 const route = useRoute()
 const router = useRouter()
+
+// msgNum 由 register.ts 的 onGlobalStateChange 写入 store，这里只读
+const { msgNum } = storeToRefs(useAppStateStore())
 
 // 菜单选中项跟随当前路径
 const selectedKeys = computed(() => [route.path])
@@ -61,6 +72,11 @@ function onMenuClick({ key }: { key: string | number }) {
 .main-menu {
   flex: 1;
   min-width: 0;
+}
+
+.main-msg-label {
+  color: #fff;
+  white-space: nowrap;
 }
 
 .main-content {

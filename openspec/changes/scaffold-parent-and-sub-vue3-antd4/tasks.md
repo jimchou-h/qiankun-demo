@@ -1,11 +1,11 @@
 ## 1. 项目骨架 + 父应用 Vite+antd4 启动
 
-端到端目标：`pnpm dev` 启动父应用，访问 `http://localhost:5173/qiankun-demo/` 显示 Layout（顶部导航含 sub-vue3-antd4 入口）+ 空 `#sub-app-container`。无子应用激活。
+端到端目标：`pnpm dev` 启动父应用，访问 `http://localhost:5800/qiankun-demo/` 显示 Layout（顶部导航含 sub-vue3-antd4 入口）+ 空 `#sub-app-container`。无子应用激活。
 
 - [x] 1.1 `git init` + 创建 `.gitignore`（`node_modules/`、`dist/`、`.scratch/`、`.trae/`、`*.log`）
 - [x] 1.2 创建根 `package.json`（workspace root，scripts 含 `dev`/`dev:sub-vue3-antd4`/`dev:all`/`build`/`build:all`/`build:sub-vue3-antd4`/`install:all`，devDependencies 含 `vite`/`@vitejs/plugin-vue`/`vue-tsc`/`npm-run-all2`，`pnpm.overrides` 强制 `vue@^3` = 3.4.21、`vue-router@^4` = 4.2.5）
 - [x] 1.3 创建 `pnpm-workspace.yaml`（`packages: ['.', 'packages/*']`）
-- [x] 1.4 创建 `vite.config.ts`（端口 5173，`base: '/qiankun-demo/'`，`@vitejs/plugin-vue`）
+- [x] 1.4 创建 `vite.config.ts`（端口 5800，`base: '/qiankun-demo/'`，`@vitejs/plugin-vue`）
 - [x] 1.5 创建 `index.html`（挂载点 `<div id="app">`，引入 `/src/main.ts`）
 - [x] 1.6 创建 `src/main.ts`（创建 Vue3 app + Pinia + Router，挂载到 `#app`，根 div 带 `data-app="root"`）
 - [x] 1.7 创建 `src/App.vue`（根 div `data-app="root"` + inline style `position: relative; z-index: 1000`，渲染 `<MainLayout />`）
@@ -21,7 +21,7 @@
 - [x] 2.2 创建 `packages/sub-vue3-antd4/vite.config.ts`（端口 5801，`server.headers['Access-Control-Allow-Origin']='*'`，`vite-plugin-qiankun` 配 `useDevMode: true`；mainSPId 由插件首个参数传入子应用 name）
 - [x] 2.3 创建 `packages/sub-vue3-antd4/index.html`（挂载点 `<div id="app">`，引入 `/src/main.ts`）
 - [x] 2.4 创建 `src/main.ts`（判断 `__POWERED_BY_QIANKUN__`：standalone 直接 createApp + mount；qiankun 模式 export `bootstrap/mount/unmount` 生命周期函数）
-- [x] 2.5 创建 `src/App.vue`（根 div + `<a-config-provider prefix-cls="a4-">` 包裹 `<router-view />`）
+- [x] 2.5 创建 `src/App.vue`（根 div + `<a-config-provider prefix-cls="a4">` 包裹 `<router-view />`；prefixCls 传 `a4` 得 `a4-btn`，传 `a4-` 会得 `a4--btn`）
 - [x] 2.6 创建 `src/views/Home.vue`（`<a-button>open modal</a-button>` + `<a-modal v-model:open="visible">demo</a-modal>`）
 - [x] 2.7 创建 `src/views/About.vue`（`<a-input />` + `<a-select />` 含若干选项）
 - [x] 2.8 创建 `src/router/index.ts`（`createAppRouter(base='/')` 工厂封装 `createWebHistory(base)`，路由表 `/home` → Home.vue、`/about` → About.vue；base 便于后续 qiankun 集成模式注入）
@@ -46,7 +46,7 @@
 
 端到端目标：Home 路由的 Modal、About 路由的 Select 下拉、Drawer 等弹窗 DOM 挂载到 `[data-app="sub-vue3-antd4"]` 内部，不挂到 body；Modal z-index 计算基数为 2000，不穿透到父应用。
 
-- [x] 4.1 在 `App.vue` 的 `<a-config-provider prefix-cls="a4-" :get-popup-container="getAppContainer">` 单点配置弹层挂载点；`getAppContainer` 返回 `document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`（antd4 中 `Modal`/`Drawer` 的 `getContainer` 未传时 fallback 到 ConfigProvider 的 `getPopupContainer`，其余 8 个弹层组件经 `useConfigInject` 读取同一值）
+- [x] 4.1 在 `App.vue` 的 `<a-config-provider prefix-cls="a4" :get-popup-container="getAppContainer">` 单点配置弹层挂载点；`getAppContainer` 返回 `document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`（antd4 中 `Modal`/`Drawer` 的 `getContainer` 未传时 fallback 到 ConfigProvider 的 `getPopupContainer`，其余 8 个弹层组件经 `useConfigInject` 读取同一值）
 - [x] 4.2 在 `App.vue` 用 `<a-app>` 包裹根内容，给 `message`/`notification`/`Modal.confirm` 函数式 API 提供 appContext
 - [x] 4.3 在 `Home.vue` 加一个 Drawer 验证挂载目标
 - [x] 4.4 验收：访问 `:5801/home`，点击 Button 弹出 Modal，DevTools Elements 检查 Modal DOM 在 `[data-app="sub-vue3-antd4"]` 内部而非 body
@@ -55,31 +55,31 @@
 
 ## 5. sub-vue3-antd4 qiankun 集成模式接入
 
-端到端目标：父应用访问 `:5173/qiankun-demo/sub-vue3-antd4/home` 加载 sub-vue3-antd4 子应用，路由切换 `/about` 正常，切回父路由 unmount 干净。
+端到端目标：父应用访问 `:5800/qiankun-demo/sub-vue3-antd4/home` 加载 sub-vue3-antd4 子应用，路由切换 `/about` 正常，切回父路由 unmount 干净。
 
-- [ ] 5.1 创建 `src/qiankun/index.ts`（`microApps` 数组含一条 sub-vue3-antd4：name/entry（dev `http://localhost:5801`，prod `/qiankun-demo/microapp/sub-vue3-antd4/`）/container=`#sub-app-container`/activeRule=`/sub-vue3-antd4`/props 占位 8 字段）
-- [ ] 5.2 创建 `src/qiankun/register.ts`（`registerMicroApps(microApps, { beforeLoad, beforeMount, afterMount, afterUnmount })` + `start({ sandbox: true, prefetch: false, singular: true })` + `addGlobalUncaughtErrorHandler` 简版 console）
-- [ ] 5.3 在父 `src/main.ts` 调用 `register()`
-- [ ] 5.4 在 sub-vue3-antd4 `main.ts` 的 `mount(props)` 用 `props.base` 重建 router（dev qiankun 模式 base 由父注入，非 qiankun 模式 fallback `/`）
-- [ ] 5.5 在 sub-vue3-antd4 `unmount(props)` 初始化 `cleanupList` + 反向遍历执行（占位清理函数 `() => console.log('cleanup demo')`）
-- [ ] 5.6 验收：`pnpm dev` + `pnpm dev:sub-vue3-antd4` 并行启动，浏览器访问 `:5173/qiankun-demo/sub-vue3-antd4/home`，sub-vue3-antd4 加载并显示 Home 路由
-- [ ] 5.7 验收：浏览器 URL 切换到 `/sub-vue3-antd4/about`，About 路由正常显示
-- [ ] 5.8 验收：浏览器 URL 切回父根 `/qiankun-demo/`，sub-vue3-antd4 `unmount` 执行，DevTools 检查 `#sub-app-container` innerHTML 为空，控制台输出 `cleanup demo`
-- [ ] 5.9 验收：DevTools 检查 sub-vue3-antd4 子应用 sandbox 生效（在子应用代码里 `window.__test__ = 1`，切回父路由后 `window.__test__` 为 undefined）
+- [x] 5.1 创建 `src/qiankun/index.ts`（`microApps` 数组含一条 sub-vue3-antd4：name/entry（dev `http://localhost:5801`，prod `/qiankun-demo/microapp/sub-vue3-antd4/`）/container=`#sub-app-container`/activeRule=`/qiankun-demo/sub-vue3-antd4`/props 占位 8 字段，其中 `base`=`/qiankun-demo/sub-vue3-antd4`）
+- [x] 5.2 创建 `src/qiankun/register.ts`（`registerMicroApps(microApps, { beforeLoad, beforeMount, afterMount, afterUnmount })` + `start({ sandbox: true, prefetch: false, singular: true })` + `addGlobalUncaughtErrorHandler` 简版 console）
+- [x] 5.3 在父 `src/main.ts` 调用 `register()`
+- [x] 5.4 在 sub-vue3-antd4 `main.ts` 的 `mount(props)` 用 `props.base` 重建 router（dev qiankun 模式 base 由父注入，非 qiankun 模式 fallback `/`）
+- [x] 5.5 在 sub-vue3-antd4 `unmount(props)` 初始化 `cleanupList` + 反向遍历执行（占位清理函数 `() => console.log('cleanup demo')`）
+- [x] 5.6 验收：`pnpm dev` + `pnpm dev:sub-vue3-antd4` 并行启动，浏览器访问 `:5800/qiankun-demo/sub-vue3-antd4/home`，sub-vue3-antd4 加载并显示 Home 路由
+- [x] 5.7 验收：浏览器 URL 切换到 `/sub-vue3-antd4/about`，About 路由正常显示
+- [x] 5.8 验收：浏览器 URL 切回父根 `/qiankun-demo/`，sub-vue3-antd4 `unmount` 执行，DevTools 检查 `#sub-app-container` innerHTML 为空，控制台输出 `cleanup demo`
+- [x] 5.9 验收：qiankun 沙箱桥接生效——子应用用 `qiankunWindow`（helper 读 `window.proxy`）写全局变量，该变量只落在沙箱代理上、真实 window 上始终为 undefined（实测 `window.proxy.__test__ === 1`、`window.proxy.__POWERED_BY_QIANKUN__ === true`、`window.__test__ === undefined`）（dev 模式下 vite-plugin-qiankun 用 ESM 动态 `import()` 加载入口，模块代码的裸 `window` 即真实 window，不经代理沙箱；裸 `window` 的强隔离改由 7.9 prod 产物复验）
 
 ## 6. 父子通信骨架
 
 端到端目标：父通过 props 注入 axios/userInfo/tenant/permission/BASE_URL/theme/lang/base 给 sub-vue3-antd4；sub-vue3-antd4 通过 `setGlobalState({msgNum})` 上报，父 Layout 显示 msgNum 徽标；sub-vue3-antd4 `onGlobalStateChange` 监听 lang 切换（占位 console）。
 
-- [ ] 6.1 创建 `src/server/customAxios.ts`（axios 实例 + `baseURL` + `interceptors.request`/`interceptors.response` 占位）
-- [ ] 6.2 在 `src/qiankun/index.ts` 的 sub-vue3-antd4 props 注入 `axios`、`userInfo`（mock `{id:1,name:'demo'}`）、`tenant`（mock `{id:1}`）、`permission`（mock `['home:view']`）、`BASE_URL`（`'/api'`）、`theme`（`'light'`）、`lang`（`'zh-CN'`）、`base`
-- [ ] 6.3 在 `src/qiankun/register.ts` 调用 `initGlobalState({ msgNum: 0, theme: 'light', lang: 'zh-CN', logoutSignal: false })`，`onGlobalStateChange` 把 `msgNum` 同步到父 Pinia store
-- [ ] 6.4 创建 `src/stores/appState.ts`（Pinia store 含 `msgNum` 状态 + setter）
-- [ ] 6.5 在 `src/layouts/MainLayout.vue` 显示 `msgNum` 徽标（顶部导航右侧 `<a-badge :count="msgNum" />`）
-- [ ] 6.6 在 sub-vue3-antd4 `Home.vue` 加按钮 `report to parent`，点击调用 `props.setGlobalState({ msgNum: <prev+1> })`
-- [ ] 6.7 在 sub-vue3-antd4 `main.ts` 的 `mount(props)` 调用 `props.onGlobalStateChange((state) => console.log('[sub] lang changed:', state.lang))`
-- [ ] 6.8 验收：父 + 子 dev 启动，访问 `:5173/qiankun-demo/sub-vue3-antd4/home`，点击 `report to parent` 按钮，父 Layout 徽标 +1
-- [ ] 6.9 验收：父控制台调用 `setGlobalState({lang:'en-US'})`（mock 父切换语言），sub-vue3-antd4 控制台输出 `[sub] lang changed: en-US`
+- [x] 6.1 创建 `src/server/customAxios.ts`（axios 实例 + `baseURL` + `interceptors.request`/`interceptors.response` 占位）
+- [x] 6.2 在 `src/qiankun/index.ts` 的 sub-vue3-antd4 props 注入 `axios`、`userInfo`（mock `{id:1,name:'demo'}`）、`tenant`（mock `{id:1}`）、`permission`（mock `['home:view']`）、`BASE_URL`（`'/api'`）、`theme`（`'light'`）、`lang`（`'zh-CN'`）、`base`
+- [x] 6.3 在 `src/qiankun/register.ts` 调用 `initGlobalState({ msgNum: 0, theme: 'light', lang: 'zh-CN', logoutSignal: false })`，`onGlobalStateChange` 把 `msgNum` 同步到父 Pinia store
+- [x] 6.4 创建 `src/stores/appState.ts`（Pinia store 含 `msgNum` 状态 + setter）
+- [x] 6.5 在 `src/layouts/MainLayout.vue` 显示 `msgNum` 徽标（顶部导航右侧 `<a-badge :count="msgNum" />`）
+- [x] 6.6 在 sub-vue3-antd4 `Home.vue` 加按钮 `report to parent`，点击调用 `props.setGlobalState({ msgNum: <prev+1> })`（子应用侧经 `src/qiankun/bridge.ts` 封装的 `reportMsgNum()` 上报）
+- [x] 6.7 在 sub-vue3-antd4 `main.ts` 的 `mount(props)` 调用 `props.onGlobalStateChange((state) => console.log('[sub] lang changed:', state.lang))`（实现为仅当 `state.lang !== prev.lang` 时打印，观测行为一致）
+- [x] 6.8 验收：父 + 子 dev 启动，访问 `:5800/qiankun-demo/sub-vue3-antd4/home`，点击 `report to parent` 按钮，父 Layout 徽标 +1（CDP 实测：点击前 `0` → 点击后 `1` → 二次点击 `2`，累加正确）
+- [x] 6.9 验收：父控制台调用 `setGlobalState({lang:'en-US'})`（mock 父切换语言），sub-vue3-antd4 控制台输出 `[sub] lang changed: en-US`（CDP 实测命中 `[sub] lang changed: en-US`）
 
 ## 7. 双 build 策略
 
@@ -102,5 +102,5 @@
 - [ ] 8.1 创建 `packages/sub-vue3-antd4/src/utils/perf.ts`（`markMount` 用 `Performance.mark` + `measure` 计算 mount 耗时；`markFCP` 用 `PerformanceObserver` 监听 `paint` entry name=`first-contentful-paint`；`reportPerf` 仅 `console.log`）
 - [ ] 8.2 在 sub-vue3-antd4 `main.ts` `mount` 起始调用 `performance.mark('sub-vue3-antd4-mount-start')`，mount 完成后调用 `markMount` + 首次 render 后 `markFCP`
 - [ ] 8.3 在父 `src/qiankun/register.ts` 的 `addGlobalUncaughtErrorHandler` 输出 `[qiankun 全局错误]` + 错误对象（结构化 console）
-- [ ] 8.4 验收：父 + 子 dev 启动，访问 `:5173/qiankun-demo/sub-vue3-antd4/home`，sub-vue3-antd4 console 输出 `[perf] mount=<X>ms` 和 `[perf] fcp=<Y>ms`
+- [ ] 8.4 验收：父 + 子 dev 启动，访问 `:5800/qiankun-demo/sub-vue3-antd4/home`，sub-vue3-antd4 console 输出 `[perf] mount=<X>ms` 和 `[perf] fcp=<Y>ms`
 - [ ] 8.5 验收：关闭 sub-vue3-antd4 dev server，刷新父应用，访问 `/qiankun-demo/sub-vue3-antd4/home`，父控制台输出 `[qiankun 全局错误]` + 错误对象，主流程不被中断

@@ -212,7 +212,7 @@ addGlobalUncaughtErrorHandler(event => {
 | 层 | 适用范围 | 方案 |
 |---|---|---|
 | 第 1 层：选择器隔离 | 4 个子应用 + 父应用 | PostCSS 构建时改写，给所有选择器加 `[data-app="sub-xxx"]` 前缀 |
-| 第 2 层：class 前缀（namespace） | sub1 / sub3 | antd4 `prefixCls="a4-"`、element-plus `namespace="ep"` |
+| 第 2 层：class 前缀（namespace） | sub1 / sub3 | antd4 `prefixCls="a4"`（class 变 `a4-btn`/`a4-modal`）、element-plus `namespace="ep"` |
 | 第 3 层：CSS 变量隔离 | 仅 sub3 | element-plus `namespace="ep"` 把 `--el-*` 改成 `--ep-*` |
 
 ### 4.2 子应用根 div
@@ -222,7 +222,7 @@ addGlobalUncaughtErrorHandler(event => {
 ```vue
 <!-- sub1/src/App.vue -->
 <template>
-  <a-config-provider :prefix-cls="'a4-'" :locale="antdLocale" :theme="themeConfig">
+  <a-config-provider :prefix-cls="'a4'" :locale="antdLocale" :theme="themeConfig">
     <div class="sub-app-root" data-app="sub-vue3-antd4">
       <router-view />
     </div>
@@ -260,8 +260,10 @@ module.exports = {
 
 **sub1（Vue3 + antd4）**：
 ```vue
-<a-config-provider :prefix-cls="'a4-'" :theme="{ token: { colorPrimary: '#1677ff' } }">
+<a-config-provider :prefix-cls="'a4'" :theme="{ token: { colorPrimary: '#1677ff' } }">
 ```
+
+> `prefixCls` 取 `a4` 而非 `a4-`：antd4 `getPrefixCls(suffix)` 返回 `` `${prefixCls}-${suffix}` ``（`es/config-provider/index.js`），传 `a4` 得到 `a4-btn`，传 `a4-` 会得到 `a4--btn`（双横线）。
 
 **sub3（Vue3 + element-plus）**：
 ```vue
@@ -900,7 +902,7 @@ document.addEventListener('visibilitychange', () => {
 
 | 应用 | 端口 |
 |---|---|
-| 父应用 | 5173 |
+| 父应用 | 5800 |
 | sub1 | 5801 |
 | sub2 | 5802 |
 | sub3 | 5803 |

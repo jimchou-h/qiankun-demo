@@ -15,7 +15,9 @@
   },
   "dependencies": {
     "ant-design-vue": "^4.2.6",
+    "axios": "^1.7.7",
     "pinia": "^2.2.4",
+    "qiankun": "^2.10.16",
     "vue": "^3.4.21",
     "vue-router": "^4.2.5"
   },

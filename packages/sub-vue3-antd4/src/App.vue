@@ -1,7 +1,9 @@
 <template>
-  <!-- prefix-cls="a4-" 把 antd4 的 ant-* class 改为 a4-*（CSS 隔离第 2 层）
+  <!-- prefix-cls="a4" 把 antd4 的 ant-* class 改为 a4-*（CSS 隔离第 2 层）。
+       MUST 传 "a4" 而非 "a4-"：antd4 getPrefixCls(suffix) 返回 `${prefixCls}-${suffix}`，
+       传 "a4-" 会得到 `a4--btn` 双横线。
        get-popup-container 单点指定弹层挂载点，覆盖全部 10 个弹层组件（第 3 层防护） -->
-  <a-config-provider prefix-cls="a4-" :get-popup-container="getAppContainer">
+  <a-config-provider prefix-cls="a4" :get-popup-container="getAppContainer">
     <!-- a-app 提供 appContext，供 message / notification / Modal.confirm 函数式 API 使用 -->
     <a-app>
       <!-- 根容器 data-app 作为 PostCSS 前缀锚点 + 弹层挂载目标；

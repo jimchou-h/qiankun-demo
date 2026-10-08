@@ -2,7 +2,7 @@
 
 ### Requirement: 父→子通过 qiankun props 注入
 
-父应用 SHALL 通过 `registerMicroApps` 的 `props` 字段向 sub-vue3-antd4 注入以下字段：`base`（子应用路由 base path，dev 为 `/`，prod 为 `/qiankun-demo/microapp/sub-vue3-antd4/`）、`userInfo`（mock 用户对象）、`tenant`（mock 租户）、`permission`（mock 权限码数组）、`axios`（父应用 axios 实例）、`BASE_URL`（API 基址）、`theme`（默认 `'light'`）、`lang`（默认 `'zh-CN'`）。
+父应用 SHALL 通过 `registerMicroApps` 的 `props` 字段向 sub-vue3-antd4 注入以下字段：`base`（子应用**路由前缀**，dev/prod 均为 `/qiankun-demo/sub-vue3-antd4`，与 activeRule 同源；注意区别于 `entry` 的**资源路径** `/qiankun-demo/microapp/sub-vue3-antd4/`）、`userInfo`（mock 用户对象）、`tenant`（mock 租户）、`permission`（mock 权限码数组）、`axios`（父应用 axios 实例）、`BASE_URL`（API 基址）、`theme`（默认 `'light'`）、`lang`（默认 `'zh-CN'`）。
 
 #### Scenario: 子应用 mount 时收到完整 props 注入
 

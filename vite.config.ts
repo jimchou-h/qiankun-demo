@@ -13,6 +13,8 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173
+    port: 5800,
+    // 端口被占用时直接报错，避免 Vite 静默改用其它端口导致父应用 URL 漂移
+    strictPort: true
   }
 })

@@ -6,7 +6,7 @@
 
 #### Scenario: 父应用 dev 启动后访问根路径
 
-- **WHEN** 开发者执行 `pnpm dev`，浏览器访问 `http://localhost:5173/qiankun-demo/`
+- **WHEN** 开发者执行 `pnpm dev`，浏览器访问 `http://localhost:5800/qiankun-demo/`
 - **THEN** 父应用 Layout 渲染，导航菜单可见，`#sub-app-container` 容器存在但为空（无子应用激活）
 
 #### Scenario: 父应用通过 qiankun 注册并启动 sub-vue3-antd4
