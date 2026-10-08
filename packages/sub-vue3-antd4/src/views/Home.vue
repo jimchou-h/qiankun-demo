@@ -3,19 +3,22 @@
     <a-card :title="t('demo.title')">
       <a-space>
         <a-button type="primary" @click="openModal">open modal</a-button>
+        <a-button @click="openDrawer">open drawer</a-button>
       </a-space>
 
       <!-- 验证业务选择器被 PostCSS 加前缀 + @keyframes 改名 -->
       <div class="demo-card">demo card（验证 CSS 前缀与 keyframes 改名）</div>
     </a-card>
 
-    <!--
-      ticket 02：Modal 仍挂载到 document.body（未做隔离）
-      ticket 04 会通过 setupAntd 把 getContainer 改到子应用根容器
-    -->
+    <!-- ticket 04：setupAntd 已把 getContainer 默认值改到子应用根容器，Modal DOM 挂载到 [data-app="sub-vue3-antd4"] 内部 -->
     <a-modal v-model:open="visible" title="antd4 Modal" @ok="visible = false">
-      <p>当前 Modal DOM 挂载到 document.body；ticket 04 会把它改到子应用根容器。</p>
+      <p>Modal 挂载到子应用根容器 [data-app="sub-vue3-antd4"] 内部。</p>
     </a-modal>
+
+    <!-- ticket 04：Drawer 同为 portal 类，getContainer 默认值已改写 -->
+    <a-drawer v-model:open="drawerVisible" title="antd4 Drawer" @close="drawerVisible = false">
+      <p>Drawer 挂载到子应用根容器 [data-app="sub-vue3-antd4"] 内部。</p>
+    </a-drawer>
   </a-space>
 </template>
 
@@ -25,9 +28,14 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const visible = ref(false)
+const drawerVisible = ref(false)
 
 function openModal() {
   visible.value = true
+}
+
+function openDrawer() {
+  drawerVisible.value = true
 }
 </script>
 

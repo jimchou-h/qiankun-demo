@@ -42,17 +42,16 @@
 - [x] 3.8 验收：DevTools 检查产物 CSS 中 `@keyframes` 名为 `sub-vue3-antd4-fadeIn`，`animation` 引用同步改名
 - [x] 3.9 验收：DevTools 检查产物 CSS 中 `body { ... }`、`html { ... }`、`:root { ... }`、`* { ... }` 全局选择器原样保留不加前缀
 
-## 4. sub-vue3-antd4 弹窗 getContainer 改造
+## 4. sub-vue3-antd4 弹窗挂载点改造
 
 端到端目标：Home 路由的 Modal、About 路由的 Select 下拉、Drawer 等弹窗 DOM 挂载到 `[data-app="sub-vue3-antd4"]` 内部，不挂到 body；Modal z-index 计算基数为 2000，不穿透到父应用。
 
-- [ ] 4.1 创建 `packages/sub-vue3-antd4/src/utils/setupAntd.ts`，遍历 `Modal`/`Drawer`/`Tooltip`/`Popover`/`Dropdown`/`Select`/`DatePicker`/`Cascader`/`TreeSelect`/`Popconfirm` 组件，修改各自 `props.getContainer.default` 为 `() => document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`
-- [ ] 4.2 在 `main.ts` 的 `mount`（qiankun 模式）和 standalone 分支都调用 `setupAntd()`
-- [ ] 4.3 在 `App.vue` 用 `<a-config-provider>` 包裹时配置 `App.useApp()` 模式给 message/notification/Modal.confirm 函数式 API 提供 appContext
-- [ ] 4.4 在 `Home.vue` 加一个 Drawer 验证挂载目标
-- [ ] 4.5 验收：访问 `:5801/home`，点击 Button 弹出 Modal，DevTools Elements 检查 Modal DOM 在 `[data-app="sub-vue3-antd4"]` 内部而非 body
-- [ ] 4.6 验收：访问 `:5801/about`，展开 Select 下拉，DevTools 检查下拉面板 DOM 在 `[data-app="sub-vue3-antd4"]` 内部
-- [ ] 4.7 验收：访问 `:5801/home` 打开 Drawer，DevTools 检查 Drawer DOM 在 `[data-app="sub-vue3-antd4"]` 内部
+- [x] 4.1 在 `App.vue` 的 `<a-config-provider prefix-cls="a4-" :get-popup-container="getAppContainer">` 单点配置弹层挂载点；`getAppContainer` 返回 `document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`（antd4 中 `Modal`/`Drawer` 的 `getContainer` 未传时 fallback 到 ConfigProvider 的 `getPopupContainer`，其余 8 个弹层组件经 `useConfigInject` 读取同一值）
+- [x] 4.2 在 `App.vue` 用 `<a-app>` 包裹根内容，给 `message`/`notification`/`Modal.confirm` 函数式 API 提供 appContext
+- [x] 4.3 在 `Home.vue` 加一个 Drawer 验证挂载目标
+- [x] 4.4 验收：访问 `:5801/home`，点击 Button 弹出 Modal，DevTools Elements 检查 Modal DOM 在 `[data-app="sub-vue3-antd4"]` 内部而非 body
+- [x] 4.5 验收：访问 `:5801/about`，展开 Select 下拉，DevTools 检查下拉面板 DOM 在 `[data-app="sub-vue3-antd4"]` 内部
+- [x] 4.6 验收：访问 `:5801/home` 打开 Drawer，DevTools 检查 Drawer DOM 在 `[data-app="sub-vue3-antd4"]` 内部
 
 ## 5. sub-vue3-antd4 qiankun 集成模式接入
 

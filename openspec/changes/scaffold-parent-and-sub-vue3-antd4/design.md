@@ -65,11 +65,14 @@
 **理由**：qiankun 内置 `strictStyleIsolation`（Shadow DOM）有兼容性问题（已被否决），`experimentalStyleIsolation` 在动态插入 body 的弹窗场景失效；自主方案可控、可调试、可独立验证。
 **替代方案**：Shadow DOM（否决，组件兼容性差）、CSS Modules（改造量大，第三方 UI 库不支持）、scoped（Vue scoped 只对 SFC 内有效，对 UI 库无效）。
 
-### D5: 弹窗 getContainer 改造——antd 全组件 props 默认值（仿参考项目 builder antd.js）
+### D5: 弹窗挂载点改造——ConfigProvider `getPopupContainer` 单点配置
 
-**选择**：sub1 创建 `src/utils/setupAntd.ts`，批量遍历 `Modal/Drawer/Tooltip/Popover/Dropdown/Select/DatePicker/Cascader/TreeSelect/Popconfirm` 等组件，修改各自 `props.getContainer.default` 为 `() => document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`。`message/notification/Modal.confirm` 函数式 API 通过 `App.useApp()` 包装或手动传 `getContainer` 参数。
-**理由**：参考项目 builder `src/components/antd.js` 已验证可行；改 props 默认值后业务代码无需逐个传 `getContainer`，降低使用门槛。
-**替代方案**：业务代码逐个传 `getContainer`（可行但漏配风险高）；全局 `Modal.appContext` 注入（部分组件不响应）。
+**选择**：sub1 在 `App.vue` 用 `<a-config-provider prefix-cls="a4-" :get-popup-container="getAppContainer">` 统一指定弹层挂载点，`getAppContainer = () => document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`。弹层组件（`Modal` / `Drawer` / `Tooltip` / `Popover` / `Dropdown` / `Select` / `DatePicker` / `Cascader` / `TreeSelect` / `Popconfirm`）全部由此单点配置覆盖，业务代码无需逐个传参。`message` / `notification` / `Modal.confirm` 函数式 API 通过 `<a-app>` + `App.useApp()` 提供 appContext。
+**理由**：实测 antd4 4.2.6 源码，`Modal` 自身 `getContainer` 未传时 fallback 到 config context 的 `getPopupContainer`（`es/modal/Modal.js`：`getContainer: getContainer || getPopupContainer?.value`），`Drawer` 同理（`es/drawer/index.js` 的 `getContainer` computed）；弹层类 8 个组件经 `useConfigInject` 读取同一 context 值（`es/select/index.js`、`es/date-picker/generatePicker/generateSinglePicker.js`、`es/tooltip/Tooltip.js`）。故单点配置即覆盖全部 10 个组件。
+**替代方案**：
+- 改写组件 `props.*.default`（上一版方案，已否决）：实测 `Tooltip` / `Popover` / `Dropdown` / `Popconfirm` 的 `getPopupContainer` prop 在 antd4 中是**裸 `Function` 构造器**（`es/tooltip/abstractTooltipProps.js`：`getPopupContainer: Function`），赋值 `.default` 会污染全局 `Function` 且对组件无效；只有 `Modal` / `Drawer` / `Select` / `DatePicker` / `Cascader` / `TreeSelect` 的 prop 为可写描述符，两类行为不一致，否决。
+- 业务代码逐个传 `getContainer` / `getPopupContainer`：可行但漏配风险高。
+- 全局 `Modal.appContext` 注入：部分组件不响应。
 
 ### D6: 通信机制——qiankun props（父→子）+ initGlobalState（子→父/子→子），不共享 Pinia
 

@@ -65,9 +65,20 @@ sub-vue3-antd4 根 div SHALL 设置 `position: relative; z-index: 2000`，创建
 - **WHEN** sub-vue3-antd4 弹出一个 antd4 Modal，Modal z-index 设为 1000
 - **THEN** 该 Modal DOM 挂载在 `[data-app="sub-vue3-antd4"]` 内部，Modal 实际渲染 z-index 计算基数为 2000（子应用根 z-index）+ 1000（Modal 自身 z-index）= 3000，但仅限于子应用 stacking context 内部，**不**穿透到父应用 z-index 1000 之上的其他元素
 
-### Requirement: 弹窗 getContainer 改造（第 3 层防护）
+### Requirement: 弹窗挂载点改造（第 3 层防护）
 
-sub-vue3-antd4 SHALL 在 `src/utils/setupAntd.ts` 中批量修改 antd4 portal 类组件的 `props.getContainer.default` 为 `() => document.querySelector('[data-app="sub-vue3-antd4"]') || document.body`。覆盖组件 MUST 包含：`Modal`、`Drawer`、`Tooltip`、`Popover`、`Dropdown`、`Select`、`DatePicker`、`Cascader`、`TreeSelect`、`Popconfirm`。函数式 API（`message`、`notification`、`Modal.confirm`）SHALL 通过 `App.useApp()` 或手动传 `getContainer` 参数处理。
+sub-vue3-antd4 SHALL 通过 antd4 公开 API 单点指定弹层挂载点：在 `App.vue` 的 `<a-config-provider prefix-cls="a4-" :get-popup-container="getAppContainer">` 传入 `getAppContainer`，使所有弹层组件 DOM 挂载到 `[data-app="sub-vue3-antd4"]` 子应用根容器而非 `document.body`。`getAppContainer` SHALL 返回 `document.querySelector('[data-app="sub-vue3-antd4"]')`，元素不存在时 fallback `document.body`。
+
+覆盖范围 MUST 包含全部 10 个组件：`Modal`、`Drawer`、`Tooltip`、`Popover`、`Dropdown`、`Select`、`DatePicker`、`Cascader`、`TreeSelect`、`Popconfirm`（antd4 中 `Modal`/`Drawer` 自身 `getContainer` 未传时 fallback 到 ConfigProvider 的 `getPopupContainer`，其余组件经 `useConfigInject` 读取同一值）。
+
+sub-vue3-antd4 SHALL NOT 通过改写组件 `props.*.default` 实现该目标（antd4 弹层类组件的 `getPopupContainer` prop 为裸 `Function` 构造器，改写会污染全局 `Function` 且对组件无效）。
+
+改配置后业务代码无需逐个传 `getContainer` / `getPopupContainer`。函数式 API（`message`、`notification`、`Modal.confirm`）SHALL 通过 `<a-app>` + `App.useApp()` 提供 appContext。
+
+#### Scenario: 单一配置项覆盖全部弹层组件
+
+- **WHEN** 检查 `App.vue` 的 `<a-config-provider>` 是否配置了 `get-popup-container`，且弹层组件自身未传挂载点 prop
+- **THEN** `getAppContainer()` 返回 `[data-app="sub-vue3-antd4"]` 元素（元素不存在时 fallback `document.body`），且 `Tooltip` / `Popover` / `Dropdown` / `Popconfirm` 的 `props.getPopupContainer` 未被改写（仍为原始的裸 `Function` 构造器，全局 `Function` 无副作用）
 
 #### Scenario: Modal 挂载到子应用根容器而非 body
 
