@@ -580,21 +580,35 @@ Vue3（sub1 / sub3）和 Vue2（sub2 / sub4）子应用都搞**双 build**：
 import qiankun from 'vite-plugin-qiankun'
 import vue from '@vitejs/plugin-vue'
 
-const isQiankun = process.env.VITE_QIANKUN === 'true'
+export default defineConfig(({ mode }) => {
+  const isQiankun = mode === 'qiankun'
 
-export default defineConfig({
-  base: isQiankun ? '/qiankun-demo/microapp/sub-vue3-antd4/' : '/',
-  plugins: [vue(), qiankun('sub-vue3-antd4', { useDevMode: true })],
-  build: {
-    outDir: isQiankun ? 'dist-qiankun' : 'dist-standalone',
-    rollupOptions: {
-      external: isQiankun ? ['vue'] : [],
-      output: { globals: { vue: 'Vue' } }
-    }
-  },
-  server: { port: 5801, host: true }
+  return {
+    base: isQiankun ? '/qiankun-demo/microapp/sub-vue3-antd4/' : '/',
+    plugins: [vue(), qiankun('sub-vue3-antd4', { useDevMode: true })],
+    build: {
+      outDir: isQiankun ? 'dist-qiankun' : 'dist-standalone',
+      rollupOptions: isQiankun
+        ? {
+            external: ['vue', 'vue-router'],
+            output: {
+              // ⚠️ 必须切 umd：vite-plugin-qiankun 在 dev 与 prod 都把入口改写为内联
+              // import('<entry>')，子应用 qiankun 包按真实 ES 模块加载，external 后的裸模块
+              // 说明符（import ... from 'vue'）浏览器无法解析；且 output.globals 仅对 umd/iife 生效
+              format: 'umd',
+              name: 'sub-vue3-antd4',
+              globals: { vue: 'Vue', 'vue-router': 'VueRouter' },
+              inlineDynamicImports: true
+            }
+          }
+        : {}
+    },
+    server: { port: 5801, host: true }
+  }
 })
 ```
+
+> ⚠️ `pinia` **不** external：pinia 官方 IIFE 产物尾部为 `}({},VueDemi)`，依赖额外的 `VueDemi` 全局（`vue-demi` 不在父应用 UMD 加载清单内）；且父子各自 `createPinia()`（见 7.4 不共享 pinia），打进各自 bundle 成本可忽略。
 
 ### 8.3 package.json scripts（每个子应用）
 
@@ -611,20 +625,27 @@ export default defineConfig({
 
 ### 8.4 父应用加载 Vue UMD 到 window
 
-父应用 `index.html`（仅 prod）：
+父应用 `index.html`（**仅 prod**）加载 Vue3 / VueRouter UMD：
 ```html
 <!-- 父应用 index.html prod 模式 -->
 <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/vue-router@4.2.5/dist/vue-router.global.prod.js"></script>
 <!-- 如果有 Vue2 子应用，还要加载 Vue2 UMD -->
 <script src="https://unpkg.com/vue@2.7.14/dist/vue.runtime.min.js"></script>
 ```
 
-dev 模式父应用不加载 UMD，用本地 Vue（Vite dev 不 external）。
+注入方式：`vite.config.ts` 内联 build-only 插件（`apply: 'build'` + `transformIndexHtml`）写入 `<head>`，不新增 `vite-plugin-html` 依赖。经典脚本先于入口 `<script type="module">`（defer 语义）执行，故 `window.Vue` 在父 bundle 求值前就绪。
+
+父应用 prod 构建 MUST 同步 external 这两个库：`build.rollupOptions.external = ['vue', 'vue-router']` + `output.format = 'umd'` + `output.globals = { vue: 'Vue', 'vue-router': 'VueRouter' }` + `inlineDynamicImports: true`——`output.globals` 仅对 umd/iife 格式生效，ES 格式下会被静默忽略，不切 UMD 则 external 后产物里的裸模块说明符无法被浏览器解析。
+
+dev 模式父应用不加载 UMD，也不 external，用 Vite dev 解析的本地 ESM Vue。
 
 ### 8.5 antd4 不 external
 
 **antd4 始终各自打包**，不参与 external 共享：
 - antd4 默认按需 import（`import { Button } from 'ant-design-vue'`），子应用只打包用到的组件
+- 按需 MUST 落到**注册方式**上：逐组件 `app.use(Button)` / `app.use(Modal)` …，**禁止** `import Antd from 'ant-design-vue'; app.use(Antd)` 全量注册（实测全量注册使子应用产物 1.59MB，按需后 660KB）
+- 新增组件时必须在入口的组件清单里登记，否则模板 `<a-xxx>` 解析失败
 - 共享 UMD 会丢失按需 import 优势，包反而变大
 - 配置复杂度增加，不划算
 

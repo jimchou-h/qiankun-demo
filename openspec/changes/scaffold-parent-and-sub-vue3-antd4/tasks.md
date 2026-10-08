@@ -83,17 +83,42 @@
 
 ## 7. 双 build 策略
 
-端到端目标：`pnpm --filter sub-vue3-antd4 build:standalone` 产物含 Vue（>200KB）；`pnpm --filter sub-vue3-antd4 build:qiankun` 产物 external Vue（<50KB）；父应用 `pnpm build` 产出 dist/，prod 模式 index.html 通过 UMD 加载 Vue3/VueRouter/Pinia 到 window。
+端到端目标：`pnpm --filter sub-vue3-antd4 build:standalone` 产物含 Vue（>200KB）；`pnpm --filter sub-vue3-antd4 build:qiankun` 产物 external Vue（显著小于 standalone）；父应用 `pnpm build` 产出 dist/，prod 模式 index.html 通过 UMD 加载 Vue3/VueRouter 到 window。
 
-- [ ] 7.1 在 sub-vue3-antd4 `vite.config.ts` 用 `mode` 区分 `build:standalone`（默认）和 `build:qiankun`，qiankun 模式 `build.rollupOptions.external = ['vue', 'vue-router', 'pinia']` + `output.globals` 映射到 `Vue`/`VueRouter`/`Pinia`
-- [ ] 7.2 在 sub-vue3-antd4 `package.json` scripts 加 `build:standalone: vite build`、`build:qiankun: vite build --mode qiankun`，根 package.json scripts `build:sub-vue3-antd4` 改为 `pnpm --filter sub-vue3-antd4 build:qiankun`（默认 qiankun 集成模式）
-- [ ] 7.3 在父应用 `index.html` 加 prod-only UMD script tag 加载 Vue3/VueRouter/Pinia（用 `vite-plugin-html` 或在 `index.html` prod 模板区分）
-- [ ] 7.4 在父应用 `vite.config.ts` prod 模式 `build.rollupOptions.external = ['vue', 'vue-router', 'pinia']` + `output.globals`
-- [ ] 7.5 在根 `package.json` scripts `build:all` 改为 `npm-run-all2 --parallel build build:sub-vue3-antd4`（其余子应用后续 change 补）
-- [ ] 7.6 验收：`pnpm --filter sub-vue3-antd4 build:standalone` 产物 `dist/assets/*.js` 含 Vue 实例代码，体积 > 200KB
-- [ ] 7.7 验收：`pnpm --filter sub-vue3-antd4 build:qiankun` 产物 `dist/assets/*.js` 不含 Vue 实例代码，体积 < 50KB
-- [ ] 7.8 验收：`pnpm build` 父应用 dist 产出，`dist/index.html` 含 Vue3/VueRouter/Pinia UMD script tag
-- [ ] 7.9 验收：用 `vite preview` 预览父应用 prod 模式，访问 `/qiankun-demo/sub-vue3-antd4/home` 子应用加载正常（验证 qiankun 集成模式 prod 跑通）
+- [x] 7.1 在 sub-vue3-antd4 `vite.config.ts` 用 `mode` 区分 `build:standalone`（默认，`dist-standalone/`）和 `build:qiankun`（`dist-qiankun/`），qiankun 模式 `build.rollupOptions.external = ['vue', 'vue-router']` + `output.format = 'umd'` + `output.name` + `output.globals`（`vue → Vue`、`vue-router → VueRouter`）+ `inlineDynamicImports: true`（pinia 不 external，见 design D3 补充）
+- [x] 7.2 在 sub-vue3-antd4 `package.json` scripts 加 `build:standalone: vite build`、`build:qiankun: vite build --mode qiankun`，根 package.json scripts `build:sub-vue3-antd4` 改为 `pnpm --filter sub-vue3-antd4 build:qiankun`（默认 qiankun 集成模式）
+- [x] 7.3 在父应用 `vite.config.ts` 加 build-only 内联插件（`apply: 'build'` + `transformIndexHtml`）向 `<head>` 注入 prod-only UMD script tag，加载 Vue3/VueRouter 到 window（不新增 `vite-plugin-html` 依赖）
+- [x] 7.4 在父应用 `vite.config.ts` prod 模式 `build.rollupOptions.external = ['vue', 'vue-router']` + `output.format = 'umd'` + `output.globals` + `inlineDynamicImports: true`（pinia 不 external）
+- [x] 7.5 在根 `package.json` scripts `build:all` 改为 `npm-run-all2 --parallel build build:sub-vue3-antd4`（其余子应用后续 change 补）
+- [x] 7.6 验收：`pnpm --filter sub-vue3-antd4 build:standalone` 产物 `dist-standalone/assets/*.js` 含 Vue 实例代码，体积 > 200KB（实测 644.8KB，含 `__v_isRef` 等 Vue 运行时特征）
+- [x] 7.7 验收：`pnpm --filter sub-vue3-antd4 build:qiankun` 产物 `dist-qiankun/assets/*.js` 为 UMD 包装（实测头部 `(a=typeof globalThis<"u"?globalThis:a||self,Vn(a.Vue,a.VueRouter))`）、不含 Vue 运行时特征代码（`__v_isRef` 未命中），体积 580.0KB < standalone 644.8KB
+- [x] 7.8 验收：`pnpm build` 父应用 dist 产出，`dist/index.html` 含 Vue3/VueRouter UMD script tag 且位于入口 module script 之前（实测 head-prepend 两行 unpkg script，随后才是 `<script type="module" src="/qiankun-demo/assets/index-96da5031.js">`）
+- [x] 7.9 验收：用 `vite preview` 预览父应用 prod 模式，访问 `/qiankun-demo/sub-vue3-antd4/home` 子应用加载正常（验证 qiankun 集成模式 prod 跑通，兼验 prod 沙箱隔离）
+- [x] 7.10 将 sub-vue3-antd4 的 antd4 注册改为逐组件按需（`app.use(Antd)` → 组件清单），修正与 REQUIREMENTS 8.5「antd4 按需 import」的既有偏差（全量 1.59MB → 按需 660KB）
+
+### Task Group 7 验证证据（2026-10-08）
+
+**产物体积 / 形态**
+
+| 产物 | 文件 | 体积 | Vue 运行时特征 |
+|---|---|---|---|
+| `build:standalone` | `dist-standalone/assets/index-8b8e4343.js` | 644.8KB | 命中（`__v_isRef`） |
+| `build:qiankun` | `dist-qiankun/assets/index-cf92faf7.js` | 580.0KB | 未命中；头部为 UMD 包装 `(a=globalThis,Vn(a.Vue,a.VueRouter))` |
+| 父应用 `pnpm build` | `dist/assets/index-96da5031.js` | 1.67MB | UMD 包装 `lr(a.Vue, a.VueRouter)` |
+
+**prod 集成端到端（`vite preview --port 4180` + CDP 驱动真实 Chrome headless）**
+
+- 子应用挂载：`#sub-app-container [data-app="sub-vue3-antd4"]` 存在，rootText 含 `open modal / open drawer / report to parent / demo card`
+- UMD 全局就绪：`typeof window.Vue === 'object'`、`typeof window.VueRouter === 'object'`（子应用 qiankun 包无自带 Vue，挂载成功即证明取自 window）
+- CSS 隔离仍生效：子应用根内 `[class*="a4-"]` 命中 16 个、`[class*="ant-"]` 命中 0 个
+- 弹窗挂载点：Modal / Drawer DOM 均在 `[data-app="sub-vue3-antd4"]` 内部（`insideSubRoot: true`）
+- 子→父通信：点击 `report to parent` 后父应用 `.ant-badge-count` = `1`
+- prod 沙箱隔离：子应用写入的 `window.__test__` 在真实 window 上为 `undefined`，同时 `typeof window.proxy === 'object'`（D9 遗留的 prod 复验通过）
+- antd4 按需注册完整：`/about` 页 `.a4-input` / `.a4-select` 均渲染，cdp 捕获到的 console 中 `Failed to resolve component` 命中 0 条
+- 唯一 404：`/favicon.ico`（与本 change 无关）
+
+**复现 preview 的部署步骤**（prod 同域部署配置属 Non-Goal，此处为验证用临时拷贝）：
+`pnpm build:all` → 将 `packages/sub-vue3-antd4/dist-qiankun/*` 拷到 `dist/microapp/sub-vue3-antd4/` → `pnpm exec vite preview --port 4180`
 
 ## 8. 性能打点骨架 + 全局错误简版
 

@@ -19,6 +19,22 @@
 - **WHEN** qiankun `start()` 被调用
 - **THEN** `sandbox: true` 生效（子应用 `window` 写入被 proxy 拦截，不污染父全局），`prefetch: false`，`singular: true`，且 `strictStyleIsolation` 与 `experimentalStyleIsolation` 均**未配置**（CSS 隔离由 PostCSS 自主方案解决，不依赖 qiankun 内置）
 
+### Requirement: 父应用 prod 模式 UMD 依赖加载
+
+父应用 SHALL 在 prod 构建时 external `vue` / `vue-router`，并通过 `output.format = 'umd'` + `output.globals`（`vue → Vue`、`vue-router → VueRouter`）+ `inlineDynamicImports: true` 让父 bundle 复用 `window.Vue` / `window.VueRouter`，避免与子应用 qiankun 集成包产生双份 Vue 实例。`output.globals` 仅对 umd/iife 格式生效，故父应用 prod 产物 MUST 为 UMD 格式（dev 不生效，dev 走本地 ESM Vue）。
+
+父应用 `index.html` prod 产物 MUST 在 `<head>` 前部注入加载 `window.Vue` / `window.VueRouter` 的 UMD `<script>`，且位于入口 `<script type="module">` 之前（module script 为 defer 语义，故 UMD 经典脚本天然先执行）。注入由 `vite.config.ts` 内联的 build-only 插件（`apply: 'build'` + `transformIndexHtml`）完成，不引入 `vite-plugin-html` 依赖。
+
+#### Scenario: prod 产物 index.html 含 UMD 依赖
+
+- **WHEN** 执行 `pnpm build`
+- **THEN** `dist/index.html` 的 `<head>` 含 Vue3 与 VueRouter 的 UMD `<script src>`，且位于入口 `<script type="module">` 之前
+
+#### Scenario: 父应用与子应用集成包共用同一份 Vue
+
+- **WHEN** prod 模式（`vite preview`）下访问 `/qiankun-demo/sub-vue3-antd4/home`
+- **THEN** 父应用与 sub-vue3-antd4 均从 `window.Vue` 取 Vue，页面正常渲染，无重复 Vue 实例导致的渲染异常
+
 ### Requirement: 父应用 Layout 与导航菜单
 
 父应用 SHALL 在 `src/layouts/MainLayout.vue` 中实现写死的导航菜单（不动态拉取）+ `#sub-app-container` 挂载点。导航项 MUST 包含 sub-vue3-antd4 入口（指向 `/sub-vue3-antd4/home`）。

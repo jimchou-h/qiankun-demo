@@ -1,6 +1,16 @@
 import { createApp, type App as VueApp } from 'vue'
 import { createPinia } from 'pinia'
-import Antd from 'ant-design-vue'
+import {
+  App as AntdApp,
+  Button,
+  Card,
+  ConfigProvider,
+  Drawer,
+  Input,
+  Modal,
+  Select,
+  Space
+} from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 import { renderWithQiankun, qiankunWindow, type QiankunProps } from 'vite-plugin-qiankun/dist/helper'
 
@@ -8,6 +18,13 @@ import App from './App.vue'
 import { createAppRouter } from './router'
 import { createAppI18n } from './locales'
 import { bindGlobalActions, cacheGlobalState, unbindGlobalActions } from './qiankun/bridge'
+
+/**
+ * antd4 按需注册（REQUIREMENTS 8.5）：逐个 use 只打包用到的组件，
+ * 避免 `app.use(Antd)` 全量引入（产物 1.5MB+）。
+ * 新增组件时在此登记，否则模板中的 `<a-xxx>` 会解析失败。
+ */
+const antdComponents = [AntdApp, Button, Card, ConfigProvider, Drawer, Input, Modal, Select, Space]
 
 let app: VueApp<Element> | null = null
 
@@ -40,7 +57,7 @@ function render(props: QiankunProps = {}) {
   app.use(createPinia())
   app.use(createAppRouter(base ?? '/'))
   app.use(createAppI18n())
-  app.use(Antd)
+  antdComponents.forEach((component) => app!.use(component))
   app.mount(mountTarget as Element | string)
 
   // 占位清理函数：验证 cleanupList 反向遍历在 unmount 时被调用

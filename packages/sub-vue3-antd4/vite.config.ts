@@ -6,24 +6,55 @@ import qiankun from 'vite-plugin-qiankun'
 // sub-vue3-antd4 子应用 Vite 配置
 // - 端口 5801，开启 CORS 让父应用（5800）可直接 fetch 子应用 entry
 // - vite-plugin-qiankun：注入 qiankun 生命周期 globals；useDevMode 让 dev server 下的 ESM 产物可被 qiankun 加载
-export default defineConfig({
-  // 独立访问时以根路径部署；qiankun 集成模式下由父应用 props.base 提供路由 base
-  base: '/',
-  plugins: [
-    vue(),
-    qiankun('sub-vue3-antd4', {
-      useDevMode: true
-    })
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  },
-  server: {
-    port: 5801,
-    headers: {
-      'Access-Control-Allow-Origin': '*'
+// - 双 build：默认（standalone）自带 Vue；--mode qiankun external Vue 系，从父应用 window 取
+export default defineConfig(({ mode }) => {
+  const isQiankun = mode === 'qiankun'
+
+  return {
+    // standalone 以根路径部署；qiankun 集成包部署在 /qiankun-demo/microapp/sub-vue3-antd4/，
+    // 用绝对路径 base 让产物内资源引用可被 import-html-entry 正确解析
+    base: isQiankun ? '/qiankun-demo/microapp/sub-vue3-antd4/' : '/',
+    plugins: [
+      vue(),
+      qiankun('sub-vue3-antd4', {
+        useDevMode: true
+      })
+    ],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
+    },
+    build: {
+      // 两条产物分目录存放，互不覆盖（见 REQUIREMENTS 8.1）
+      outDir: isQiankun ? 'dist-qiankun' : 'dist-standalone',
+      emptyOutDir: true,
+      rollupOptions: isQiankun
+        ? {
+            // pinia 不 external：其 IIFE 产物依赖额外的 VueDemi 全局，且父子各自 createPinia()
+            external: ['vue', 'vue-router'],
+            output: {
+              // vite-plugin-qiankun 把入口改写为内联 import('<entry>')（dev/prod 均生效），
+              // 产物按真实 ES 模块加载；若保持 ES 格式，external 的裸模块说明符（import 'vue'）
+              // 无法被浏览器解析，且 output.globals 对 ES 格式无效。
+              // 故 MUST 产出 UMD + globals，映射到父应用 UMD 注入的 window.Vue / window.VueRouter。
+              format: 'umd',
+              name: 'sub-vue3-antd4',
+              globals: {
+                vue: 'Vue',
+                'vue-router': 'VueRouter'
+              },
+              // UMD 不支持 code splitting，强制内联动态 import
+              inlineDynamicImports: true
+            }
+          }
+        : {}
+    },
+    server: {
+      port: 5801,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      }
     }
   }
 })

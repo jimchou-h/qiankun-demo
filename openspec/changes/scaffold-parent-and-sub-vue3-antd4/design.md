@@ -49,10 +49,18 @@
 
 **选择**：sub1 `vite.config.ts` 用 `mode` 区分两条 build：
 - `build:standalone`（默认）：`build.rollupOptions.external = []`，Vue 打进 bundle，独立部署可单跑
-- `build:qiankun`：`build.rollupOptions.external = ['vue', 'vue-router', 'pinia']`，从父应用 `window.Vue` 取，集成部署
+- `build:qiankun`：`build.rollupOptions.external = ['vue', 'vue-router']`，从父应用 `window.Vue` / `window.VueRouter` 取，集成部署
 **理由**：父应用 prod `index.html` 通过 UMD 加载 Vue3 到 `window.Vue`，子应用 qiankun 集成模式下复用同一份 Vue 实例（避免多份 Vue 导致 `app instance` 不一致）；独立访问要求子应用自带 Vue。
 **替代方案**：始终 external Vue（独立访问需先加载 Vue UMD，违背"零配置"要求）；始终打进 Vue（集成模式多份 Vue 实例，sandbox 内不一致）。
 **注**：antd4 不 external（保按需 import tree-shaking，体积可控）；vue-i18n 不 external（子应用各自维护 locale，复用价值低）。
+
+**实现补充（实现期发现，回写制品）**：
+
+1. **`build:qiankun` 必须配 `output.format = 'umd'` + `name` + `globals` + `inlineDynamicImports: true`**。原因：`vite-plugin-qiankun`（`dist/index.js` `transformIndexHtml`，line 89-105）**不区分 dev/prod**，把 `<body script[type=module]>` 一律改写为内联 `import('<entry>')`；故子应用 qiankun 包按真实 ES 模块加载，external 后产物中的裸模块说明符（`import ... from 'vue'`）浏览器无法解析。`output.globals` **仅对 umd/iife 格式生效**，ES 格式下被静默忽略，因此 MUST 显式切 UMD。UMD 不支持 code splitting，故同时 `inlineDynamicImports: true`。
+2. **pinia 从 external 清单移除**。pinia 官方 IIFE 产物（`pinia/dist/pinia.iife.prod.js` 结尾 `}({},VueDemi)`）依赖额外的 `VueDemi` 全局，而 `vue-demi` 不属父应用 UMD 加载清单；且按 D6「不共享 Pinia」，父子各自 `createPinia()`，pinia 无跨应用共享价值，打进各自 bundle 成本可忽略（prod ~10KB）。
+3. **父应用 prod 同样切 UMD**。`output.globals` 对 ES 格式无效 → 父应用 prod 亦 MUST `format: 'umd'` + `inlineDynamicImports: true`，才能真正复用 `window.Vue` / `window.VueRouter`。父应用路由全部静态 import（`src/router/index.ts` 无 `() => import()`），无 code splitting 需求，切 UMD 无损失。
+4. **UMD script 注入方式**：AC 原列 `vite-plugin-html` / index.html 模板二选一；实现改用 `vite.config.ts` 内联 build-only 插件（`apply: 'build'` + `transformIndexHtml` 注入 `<head>`），零新增依赖且满足"prod-only"。
+5. **antd4 改逐组件注册**：验证双 build 体积时发现 sub1 入口为 `import Antd from 'ant-design-vue'; app.use(Antd)` 全量注册，产物 1.59MB，与 REQUIREMENTS 8.5「antd4 只打包用到的组件」相悖，且使"qiankun 包 vs standalone 包"体积对比失去意义（Vue 运行时仅占 66KB）。改为逐组件 `app.use(Button) / app.use(Modal) / …`（9 个已用组件），产物降至 660KB / 594KB。新增模板组件时 MUST 同步登记。
 
 ### D4: CSS 隔离三层防护——PostCSS prefix + UI namespace + z-index 基数
 

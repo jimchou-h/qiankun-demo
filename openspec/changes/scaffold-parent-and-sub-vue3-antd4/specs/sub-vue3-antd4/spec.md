@@ -36,20 +36,36 @@ sub-vue3-antd4 SHALL 支持独立 `pnpm dev:sub-vue3-antd4` 启动并直接访�
 ### Requirement: 双 build 策略
 
 sub-vue3-antd4 SHALL 提供两条 build 命令：
-- `build:standalone`：构建独立部署包，`vite build` 默认配置，**不** external Vue/Vue Router/Pinia，bundle 含完整 Vue 实例，可独立部署到任意静态服务器
-- `build:qiankun`：构建 qiankun 集成包，`build.rollupOptions.external = ['vue', 'vue-router', 'pinia']`，运行时从父应用 `window.Vue` / `window.VueRouter` / `window.Pinia` 取（父应用 prod `index.html` 通过 UMD 加载这些库到 window）
+- `build:standalone`（`vite build`，默认 mode）：输出 `dist-standalone/`，**不** external，bundle 含完整 Vue 实例，可独立部署到任意静态服务器
+- `build:qiankun`（`vite build --mode qiankun`）：输出 `dist-qiankun/`，`build.rollupOptions.external = ['vue', 'vue-router']`，运行时从父应用 `window.Vue` / `window.VueRouter` 取（父应用 prod `index.html` 通过 UMD 加载这些库到 window）
 
-antd4 MUST NOT external（保按需 import tree-shaking，体积可控）。vue-i18n MUST NOT external（子应用各自维护 locale）。
+`build:qiankun` MUST 同时设置 `output.format = 'umd'` + `output.name = 'sub-vue3-antd4'` + `output.globals`（`vue → Vue`、`vue-router → VueRouter`）+ `inlineDynamicImports: true`。原因：`vite-plugin-qiankun` 的 `transformIndexHtml` 在 **dev 与 prod 均生效**，会把入口 `<script type="module">` 改写为内联 `import('<entry>')`，子应用 qiankun 包因此按**真实 ES 模块**加载；external 后产物里的裸模块说明符（`import ... from 'vue'`）浏览器无法解析，必须借 UMD 包装把依赖改为读取全局变量（`output.globals` 仅对 umd/iife 格式生效，ES 格式下会被静默忽略）。
+
+antd4 MUST NOT external（保按需 import tree-shaking，体积可控）。vue-i18n MUST NOT external（子应用各自维护 locale）。pinia MUST NOT external：pinia 官方 IIFE 产物尾部为 `}({},VueDemi)`，依赖额外的 `VueDemi` 全局，而 `vue-demi` 不在父应用 UMD 加载清单内；且按「不共享 Pinia」约束父子各自 `createPinia()`，pinia 无跨应用共享价值，打进各自 bundle 成本可忽略。
 
 #### Scenario: standalone build 产物含 Vue
 
 - **WHEN** 执行 `pnpm --filter sub-vue3-antd4 build:standalone`
-- **THEN** 产物 `dist/assets/*.js` 含 Vue3 实例代码，体积预估 > 200KB（含 Vue 运行时 + Router + Pinia），可直接部署到 nginx 单跑
+- **THEN** 产物 `dist-standalone/assets/*.js` 含 Vue3 实例代码，体积 > 200KB（实测 ~660KB，含 Vue 运行时 + Router + Pinia + antd4 按需），可直接部署到 nginx 单跑
 
 #### Scenario: qiankun build 产物 external Vue
 
 - **WHEN** 执行 `pnpm --filter sub-vue3-antd4 build:qiankun`
-- **THEN** 产物 `dist/assets/*.js` 不含 Vue 实例代码，体积预估 < 50KB（仅业务代码 + antd4 按需 import），`rollupOptions.external` 列出 `vue`、`vue-router`、`pinia`
+- **THEN** 产物 `dist-qiankun/assets/*.js` 为 UMD 包装（`factory(global.Vue, global.VueRouter)`）、不含 Vue 运行时特征代码，体积小于 standalone 产物（实测 ~594KB vs ~660KB，差值 ≈ Vue 运行时 + vue-router 66KB），`rollupOptions.external` 列出 `vue`、`vue-router`
+
+### Requirement: antd4 按需注册
+
+sub-vue3-antd4 SHALL 逐组件注册 antd4（`app.use(Button)` / `app.use(Modal)` …），MUST NOT 使用 `import Antd from 'ant-design-vue'; app.use(Antd)` 全量注册。新增模板中使用的 `<a-xxx>` 组件时，MUST 在入口组件清单中同步登记。
+
+#### Scenario: 产物只含用到的 antd4 组件
+
+- **WHEN** 执行 `pnpm --filter sub-vue3-antd4 build:standalone`
+- **THEN** 产物 JS 体积显著小于全量注册（实测全量 1.59MB → 按需 660KB），且 `dist-standalone/assets/*.js` 不含未使用组件（如 `DatePicker` / `Table`）的实现代码
+
+#### Scenario: 模板中的 antd4 组件全部解析成功
+
+- **WHEN** 在 prod 产物中访问 `/home` 与 `/about`
+- **THEN** ConfigProvider / App / Space / Card / Button / Modal / Drawer / Input / Select 全部渲染，无 `Failed to resolve component: a-xxx` 警告
 
 ### Requirement: sub-vue3-antd4 demo 页面
 

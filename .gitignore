@@ -16,5 +16,7 @@ pnpm-debug.log*
 !.vscode/extensions.json
 .idea/
 
-# 子应用 standalone 构建产物
+# 子应用构建产物（双 build：standalone / qiankun）
 packages/*/dist/
+packages/*/dist-standalone/
+packages/*/dist-qiankun/

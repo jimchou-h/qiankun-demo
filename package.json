@@ -10,7 +10,7 @@
     "dev:all": "npm-run-all2 --parallel dev dev:sub-vue3-antd4",
     "build": "vite build",
     "build:all": "npm-run-all2 --parallel build build:sub-vue3-antd4",
-    "build:sub-vue3-antd4": "pnpm --filter sub-vue3-antd4 build:standalone",
+    "build:sub-vue3-antd4": "pnpm --filter sub-vue3-antd4 build:qiankun",
     "install:all": "pnpm install"
   },
   "dependencies": {
