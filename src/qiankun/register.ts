@@ -12,6 +12,29 @@ const INITIAL_GLOBAL_STATE = {
 }
 
 /**
+ * qiankun 的 `addGlobalUncaughtErrorHandler` 即 window 的 `error` + `unhandledrejection`
+ * 监听器（见 `qiankun/es/errorHandler.js`），故回调实参可能是 ErrorEvent（运行时异常）、
+ * PromiseRejectionEvent（子应用加载 promise 被拒）或字符串。统一结构化后交给 console，
+ * 便于后续接错误上报（10s 超时 / 无限重试在后续 change 补）。
+ */
+function describeUncaughtError(event: Event | string): Record<string, unknown> {
+  if (event instanceof ErrorEvent) {
+    return {
+      kind: 'error',
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      error: event.error
+    }
+  }
+  if (event instanceof PromiseRejectionEvent) {
+    return { kind: 'unhandledrejection', reason: event.reason }
+  }
+  return { kind: typeof event, event }
+}
+
+/**
  * 注册子应用并启动 qiankun。
  *
  * MUST 在父应用 `app.mount('#app')` 之后调用：`#sub-app-container` 由
@@ -47,7 +70,7 @@ export function register(): void {
 
   // 简版全局错误兜底：子应用加载失败不中断父应用主流程（超时/重试在后续 change 补齐）
   addGlobalUncaughtErrorHandler((event) => {
-    console.warn('[qiankun 全局错误]', event)
+    console.error('[qiankun 全局错误]', describeUncaughtError(event))
   })
 
   if (import.meta.env.DEV) {

@@ -124,8 +124,36 @@
 
 端到端目标：sub-vue3-antd4 mount 后 console 输出 `[perf] mount=Xms`，FCP 后 console 输出 `[perf] fcp=Yms`；模拟子应用加载错误（关掉 sub dev server），父控制台输出 `[qiankun 全局错误]`。
 
-- [ ] 8.1 创建 `packages/sub-vue3-antd4/src/utils/perf.ts`（`markMount` 用 `Performance.mark` + `measure` 计算 mount 耗时；`markFCP` 用 `PerformanceObserver` 监听 `paint` entry name=`first-contentful-paint`；`reportPerf` 仅 `console.log`）
-- [ ] 8.2 在 sub-vue3-antd4 `main.ts` `mount` 起始调用 `performance.mark('sub-vue3-antd4-mount-start')`，mount 完成后调用 `markMount` + 首次 render 后 `markFCP`
-- [ ] 8.3 在父 `src/qiankun/register.ts` 的 `addGlobalUncaughtErrorHandler` 输出 `[qiankun 全局错误]` + 错误对象（结构化 console）
-- [ ] 8.4 验收：父 + 子 dev 启动，访问 `:5800/qiankun-demo/sub-vue3-antd4/home`，sub-vue3-antd4 console 输出 `[perf] mount=<X>ms` 和 `[perf] fcp=<Y>ms`
-- [ ] 8.5 验收：关闭 sub-vue3-antd4 dev server，刷新父应用，访问 `/qiankun-demo/sub-vue3-antd4/home`，父控制台输出 `[qiankun 全局错误]` + 错误对象，主流程不被中断
+- [x] 8.1 创建 `packages/sub-vue3-antd4/src/utils/perf.ts`（`markMount` 用 `Performance.mark` + `measure` 计算 mount 耗时；`markFCP` 用 `PerformanceObserver` 监听 `paint` entry name=`first-contentful-paint`；`reportPerf` 仅 `console.log`）
+- [x] 8.2 在 sub-vue3-antd4 `main.ts` `mount` 起始调用 `performance.mark('sub-vue3-antd4-mount-start')`，mount 完成后调用 `markMount` + 首次 render 后 `markFCP`
+- [x] 8.3 在父 `src/qiankun/register.ts` 的 `addGlobalUncaughtErrorHandler` 输出 `[qiankun 全局错误]` + 错误对象（结构化 console）
+- [x] 8.4 验收：父 + 子 dev 启动，访问 `:5800/qiankun-demo/sub-vue3-antd4/home`，sub-vue3-antd4 console 输出 `[perf] mount=<X>ms` 和 `[perf] fcp=<Y>ms`
+- [x] 8.5 验收：关闭 sub-vue3-antd4 dev server，刷新父应用，访问 `/qiankun-demo/sub-vue3-antd4/home`，父控制台输出 `[qiankun 全局错误]` + 错误对象，主流程不被中断
+
+### Task Group 8 验证证据（2026-10-08）
+
+**验证方式**：`chrome --headless=new --enable-logging=stderr --v=1` 抓取页面 console（`[INFO:CONSOLE]` 行）；DOM 断言用 `--dump-dom`。临时日志 / 临时 profile 均在 `.scratch/` 下用后即删。
+
+**8.4 —— 性能打点（父 + 子 dev 并行，访问 `http://localhost:5800/qiankun-demo/sub-vue3-antd4/home`）**
+
+```
+[sub-vue3-antd4] mount props keys: base,axios,userInfo,tenant,permission,BASE_URL,theme,lang,name,mountParcel,singleSpa,container,setGlobalState,onGlobalStateChange
+[perf] mount=25ms      source: http://localhost:5801/src/utils/perf.ts (6)
+[qiankun] afterMount sub-vue3-antd4
+[perf] fcp=780ms       source: http://localhost:5801/src/utils/perf.ts (6)
+```
+
+- 两次独立运行结果一致：`mount=24ms / fcp=1872ms`、`mount=25ms / fcp=780ms`（数值随首次编译缓存命中情况浮动，量级稳定）。
+- 注意：用 `--virtual-time-budget` 抓取时 `mount=0ms` —— 虚拟时钟在同步执行期间不前进，属抓取方式造成的假象，非实现问题；故改为真实时间抓取。
+
+**8.5 —— 全局错误兜底（`Stop-Process` 杀掉 5801 子应用 dev server 后刷新父应用）**
+
+```
+[qiankun 全局错误] [object Object]       source: http://localhost:5800/qiankun-demo/src/qiankun/register.ts (48)
+Uncaught TypeError: application 'sub-vue3-antd4' died in status LOADING_SOURCE_CODE: Failed to fetch
+```
+
+- 结构化对象实参为 `{ kind: 'unhandledrejection', reason: <Error: Failed to fetch> }`（qiankun 的 handler 即 window `error` + `unhandledrejection` 监听器，此处走 rejection 分支；`--enable-logging` 通道只能序列化出 `[object Object]`，对象本身可在 DevTools 中展开）。
+- 主流程不被中断：同期 `--dump-dom` 断言 `sub-app-container` = true、`data-app="root"` = true、`ant-layout` = true、`data-app="sub-vue3-antd4"` = false —— 父应用 Layout 照常渲染，仅子应用未挂载。
+- 验证后已重新拉起子应用 dev server，5801 恢复监听。
+

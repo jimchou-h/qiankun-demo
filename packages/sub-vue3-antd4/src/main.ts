@@ -18,6 +18,7 @@ import App from './App.vue'
 import { createAppRouter } from './router'
 import { createAppI18n } from './locales'
 import { bindGlobalActions, cacheGlobalState, unbindGlobalActions } from './qiankun/bridge'
+import { MOUNT_START_MARK, markFCP, markMount } from './utils/perf'
 
 /**
  * antd4 按需注册（REQUIREMENTS 8.5）：逐个 use 只打包用到的组件，
@@ -60,6 +61,10 @@ function render(props: QiankunProps = {}) {
   antdComponents.forEach((component) => app!.use(component))
   app.mount(mountTarget as Element | string)
 
+  // mount 完成 + 首帧渲染后打点（骨架：仅 console）
+  markMount()
+  markFCP()
+
   // 占位清理函数：验证 cleanupList 反向遍历在 unmount 时被调用
   cleanupList.push(() => console.log('cleanup demo'))
 
@@ -75,6 +80,9 @@ renderWithQiankun({
     console.log('[sub-vue3-antd4] bootstrap')
   },
   mount(props: QiankunProps) {
+    // mount 起始打点，与 render() 末尾的 markMount 配对
+    performance.mark(MOUNT_START_MARK)
+
     console.log('[sub-vue3-antd4] mount props keys:', Object.keys(props).join(','))
 
     // 子→父/子→子：登记 qiankun 全局状态操作，供组件内上报（Home.vue 的 report to parent）
@@ -110,6 +118,7 @@ renderWithQiankun({
 
 // 独立访问：非 qiankun 环境直接启动
 if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  performance.mark(MOUNT_START_MARK)
   console.log('[sub-vue3-antd4] standalone 模式启动')
   render({})
 }
