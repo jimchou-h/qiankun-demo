@@ -5,7 +5,7 @@
 技术栈基线：
 - 父应用：Vue3.4.21 + Vite4 + Ant Design Vue 4 + Pinia + Vue Router 4 + axios + qiankun 2.10+
 - sub-vue3-antd4：Vue3.4.21 + Vite4 + vite-plugin-qiankun + Ant Design Vue 4 + Vue Router 4 + Pinia + vue-i18n 9
-- 工具链：pnpm 10 workspace + npm-run-all2 + postcss-prefix-selector + postcss-rename-keyframes
+- 工具链：pnpm 10 workspace + npm-run-all2 + postcss-prefix-selector + 本地 keyframes 前缀插件
 
 约束来源：`AGENTS.md` 的 Hard Constraints（不使用 qiankun CSS 隔离、JS 沙箱开、弹窗挂子应用根、history 路由 base path 注入、子应用独立访问零配置、pnpm overrides 强制版本、props+initGlobalState 通信、双 build、4 个 Vue 子应用、主题/i18n 分档、错误 10s+重试、性能 4 指标）。
 

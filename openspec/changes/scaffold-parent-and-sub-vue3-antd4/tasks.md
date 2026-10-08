@@ -31,16 +31,16 @@
 
 端到端目标：CSS 选择器被 `[data-app="sub-vue3-antd4"]` 前缀改写，antd4 class 带 `a4-` 前缀，keyframes 名加 `sub-vue3-antd4-` 前缀，全局选择器（body/html/:root/*）跳过；子应用根 div 有 `data-app="sub-vue3-antd4"` + z-index=2000 stacking context。
 
-- [ ] 3.1 创建 `packages/sub-vue3-antd4/postcss.config.js`（`postcss-prefix-selector` 配 `prefix: '[data-app="sub-vue3-antd4"]'`，`transform` 跳过 `body/html/:root/*`；keyframes 改名用本地插件 `postcss-prefix-keyframes.cjs`，前缀 `sub-vue3-antd4-`，幂等）
-- [ ] 3.1b 创建 `packages/sub-vue3-antd4/postcss-prefix-keyframes.cjs`（约 15 行：遍历 `@keyframes` atRule 改名 + 同步改写 `animation`/`animation-name` 声明引用，已带前缀则跳过）
-- [ ] 3.2 在 `App.vue` 根 div 加 `data-app="sub-vue3-antd4"` 属性 + inline style `position: relative; z-index: 2000`
-- [ ] 3.3 在 `Home.vue` 加一个 `<div class="demo-card">` 验证业务选择器前缀
-- [ ] 3.4 在 `Home.vue` 加 `@keyframes fadeIn` + 引用 `animation: fadeIn` 验证 keyframes 改名
-- [ ] 3.5 验收：`pnpm dev:sub-vue3-antd4` + DevTools Elements 检查根 div 有 `data-app="sub-vue3-antd4"` + computed style `position: relative` + `z-index: 2000`
-- [ ] 3.6 验收：DevTools 检查 `<a-button>` 的 class 含 `a4-btn` 不含 `ant-btn`
-- [ ] 3.7 验收：DevTools 检查 `Network → main.css`（或 `<style>` 标签）产物中 `.demo-card` 被改写为 `[data-app="sub-vue3-antd4"] .demo-card`
-- [ ] 3.8 验收：DevTools 检查产物 CSS 中 `@keyframes` 名为 `sub-vue3-antd4-fadeIn`，`animation` 引用同步改名
-- [ ] 3.9 验收：DevTools 检查产物 CSS 中 `body { ... }`、`html { ... }`、`:root { ... }`、`* { ... }` 全局选择器原样保留不加前缀
+- [x] 3.1 创建 `packages/sub-vue3-antd4/postcss.config.js`（`postcss-prefix-selector` 配 `prefix: '[data-app="sub-vue3-antd4"]'`，`transform` 跳过 `body/html/:root/*`；keyframes 改名用本地插件 `postcss-prefix-keyframes.cjs`，前缀 `sub-vue3-antd4-`，幂等）
+- [x] 3.1b 创建 `packages/sub-vue3-antd4/postcss-prefix-keyframes.cjs`（约 15 行：遍历 `@keyframes` atRule 改名 + 同步改写 `animation`/`animation-name` 声明引用，已带前缀则跳过）
+- [x] 3.2 在 `App.vue` 根 div 加 `data-app="sub-vue3-antd4"` 属性 + inline style `position: relative; z-index: 2000`
+- [x] 3.3 在 `Home.vue` 加一个 `<div class="demo-card">` 验证业务选择器前缀
+- [x] 3.4 在 `Home.vue` 加 `@keyframes fadeIn` + 引用 `animation: fadeIn` 验证 keyframes 改名
+- [x] 3.5 验收：`pnpm dev:sub-vue3-antd4` + DevTools Elements 检查根 div 有 `data-app="sub-vue3-antd4"` + computed style `position: relative` + `z-index: 2000`
+- [x] 3.6 验收：DevTools 检查 `<a-button>` 的 class 含 `a4-btn` 不含 `ant-btn`
+- [x] 3.7 验收：DevTools 检查 `Network → main.css`（或 `<style>` 标签）产物中 `.demo-card` 被改写为 `[data-app="sub-vue3-antd4"] .demo-card`
+- [x] 3.8 验收：DevTools 检查产物 CSS 中 `@keyframes` 名为 `sub-vue3-antd4-fadeIn`，`animation` 引用同步改名
+- [x] 3.9 验收：DevTools 检查产物 CSS 中 `body { ... }`、`html { ... }`、`:root { ... }`、`* { ... }` 全局选择器原样保留不加前缀
 
 ## 4. sub-vue3-antd4 弹窗 getContainer 改造
 
