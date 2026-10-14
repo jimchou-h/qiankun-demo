@@ -11,7 +11,6 @@ import {
   Select,
   Space
 } from 'ant-design-vue'
-import 'ant-design-vue/dist/reset.css'
 import { renderWithQiankun, qiankunWindow, type QiankunProps } from 'vite-plugin-qiankun/dist/helper'
 
 import App from './App.vue'

@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>sub-vue3-antd4</title>
+    <!-- 全局 reset 保持不加 PostCSS 前缀（public/ 目录原样服务）：
+         若经 src 导入会被 postcss-prefix-selector 加 [data-app] 前缀，
+         `button{color:inherit}` 特异性升至 (0,1,1) 会覆盖 antd4 cssinjs
+         的 .a4-btn-primary{color:#fff} (0,1,0)，导致按钮文字变黑 -->
+    <link rel="stylesheet" href="/reset.css" />
   </head>
   <body>
     <div id="app"></div>
