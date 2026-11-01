@@ -1,0 +1,10 @@
+// 必须先于其他 @use 加载带配置的 config.scss：Sass 中首次带配置加载模块会固定该配置
+// 给整个编译期，后续 theme-chalk 各组件 scss 内部 @use 同一个 config.scss 时复用此配置，
+// 从而把 $namespace 从 'el' 改为 'ep'（产物类名 .ep-*、CSS 变量 --ep-*）。
+// 注意：element-plus 2.4+ 起 $namespace 声明在 mixins/config.scss（2.4 之前位于 common/var.scss）。
+@use 'element-plus/theme-chalk/src/mixins/config.scss' with (
+  $namespace: 'ep'
+);
+
+// 全量主题源码（含 base/icon 等），经上方配置编译为 ep namespace
+@use 'element-plus/theme-chalk/src/index.scss';

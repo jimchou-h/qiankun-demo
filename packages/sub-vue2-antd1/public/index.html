@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sub-vue2-antd1</title>
+    <!-- 全局 reset 保持不加 PostCSS 前缀（public/ 目录原样服务）：
+         若经 src 导入会被 postcss-prefix-selector 加 [data-app] 前缀，
+         `button{color:inherit}` 特异性升至 (0,1,1) 会覆盖 antd1
+         的 .ant-btn-primary{color:#fff} (0,1,0)，导致按钮文字变黑 -->
+    <!-- BASE_URL = publicPath：qiankun 集成时为 /qiankun-demo/microapp/sub-vue2-antd1/，
+         独立时为 /。用模板变量避免相对路径被浏览器按 document baseURI 解析成根 /reset.css -->
+    <link rel="stylesheet" href="<%= BASE_URL %>reset.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>

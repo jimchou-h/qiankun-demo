@@ -37,11 +37,12 @@ export default defineConfig(({ mode }) => {
               // vite-plugin-qiankun 把入口改写为内联 import('<entry>')（dev/prod 均生效），
               // 产物按真实 ES 模块加载；若保持 ES 格式，external 的裸模块说明符（import 'vue'）
               // 无法被浏览器解析，且 output.globals 对 ES 格式无效。
-              // 故 MUST 产出 UMD + globals，映射到父应用 UMD 注入的 window.Vue / window.VueRouter。
+              // 故 MUST 产出 UMD + globals，映射到父应用注入的稳定全局 window.Vue3 / window.VueRouter
+              // （不用 window.Vue：该名字被 Vue2 子应用的 vue-router@3/vue-i18n@8 自动安装占用）。
               format: 'umd',
               name: 'sub-vue3-antd4',
               globals: {
-                vue: 'Vue',
+                vue: 'Vue3',
                 'vue-router': 'VueRouter'
               },
               // UMD 不支持 code splitting，强制内联动态 import

@@ -7,10 +7,17 @@
   "scripts": {
     "dev": "vite",
     "dev:sub-vue3-antd4": "pnpm --filter sub-vue3-antd4 dev",
-    "dev:all": "npm-run-all2 --parallel dev dev:sub-vue3-antd4",
+    "dev:sub-vue2-antd1": "pnpm --filter sub-vue2-antd1 dev",
+    "dev:sub-vue3-element-plus": "pnpm --filter sub-vue3-element-plus dev",
+    "dev:sub-vue2-element-ui": "pnpm --filter sub-vue2-element-ui dev",
+    "dev:all": "npm-run-all2 --parallel dev dev:sub-vue3-antd4 dev:sub-vue2-antd1 dev:sub-vue3-element-plus dev:sub-vue2-element-ui",
     "build": "vite build",
-    "build:all": "npm-run-all2 --parallel build build:sub-vue3-antd4",
+    "build:all": "npm-run-all2 --parallel build build:sub-vue3-antd4 build:sub-vue2-antd1 build:sub-vue3-element-plus build:sub-vue2-element-ui",
     "build:sub-vue3-antd4": "pnpm --filter sub-vue3-antd4 build:qiankun",
+    "build:sub-vue2-antd1": "pnpm --filter sub-vue2-antd1 build:qiankun",
+    "build:sub-vue3-element-plus": "pnpm --filter sub-vue3-element-plus build:qiankun",
+    "build:sub-vue2-element-ui": "pnpm --filter sub-vue2-element-ui build:qiankun",
+    "postbuild:all": "node scripts/copy-microapps.mjs",
     "install:all": "pnpm install"
   },
   "dependencies": {
@@ -19,6 +26,7 @@
     "pinia": "^2.2.4",
     "qiankun": "^2.10.16",
     "vue": "^3.4.21",
+    "vue-i18n": "^9.14.0",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
@@ -32,7 +40,9 @@
   "pnpm": {
     "overrides": {
       "vue@^3": "3.4.21",
-      "vue-router@^4": "4.2.5"
+      "vue-router@^4": "4.2.5",
+      "vue@^2": "2.7.14",
+      "vue-router@^3": "3.6.5"
     },
     "onlyBuiltDependencies": [
       "core-js",

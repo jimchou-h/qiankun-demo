@@ -1,0 +1,51 @@
+/**
+ * 弹层样式覆盖（示例：Modal 头部蓝底白字）
+ *
+ * 为什么单独放一个文件而不是写在组件里：
+ * 1. 弹层 DOM 由 ConfigProvider 的 getPopupContainer 挂到子应用根容器内，
+ *    不在组件自身 DOM 里，组件上的 <style scoped> 打不中它（弹层节点没有 data-v 属性）
+ * 2. 覆盖样式脱离组件作用域，集中管理才追得动
+ *
+ * 选择器已显式带 [data-app] 前缀（PostCSS 前缀插件遇到含 APP_SELECTOR 的选择器会跳过），
+ * 特异性 (0,3,0) 高于 antd4 cssinjs 的 :where(.css-xxx).a4-modal .a4-modal-header (0,2,0)。
+ *
+ * 为什么要把 content 的 padding 清零：
+ * antd4 的 .a4-modal-content 自带 padding: 20px 24px，头部元素在这个内边距之内，
+ * 直接给头部铺背景只会有中间 472px 变蓝（Modal 宽 520），两侧露出白边，关闭按钮也落在白底上。
+ * 所以由 content 交出内边距，改由 header/body/footer 各自持有。
+ */
+
+[data-app="sub-vue3-antd4"] .a4-modal .a4-modal-content {
+  padding: 0;
+  /* 让蓝色头部贴合弹窗圆角 */
+  overflow: hidden;
+}
+
+[data-app="sub-vue3-antd4"] .a4-modal .a4-modal-header {
+  padding: 16px 24px;
+  margin: 0;
+  background: #1677ff;
+  border-bottom-color: #1677ff;
+}
+
+[data-app="sub-vue3-antd4"] .a4-modal .a4-modal-header .a4-modal-title {
+  color: #fff;
+}
+
+[data-app="sub-vue3-antd4"] .a4-modal .a4-modal-body {
+  padding: 20px 24px;
+}
+
+[data-app="sub-vue3-antd4"] .a4-modal .a4-modal-footer {
+  padding: 0 24px 20px;
+}
+
+/* 关闭按钮默认用 currentColor 画图标，跟着头部一起变白 */
+[data-app="sub-vue3-antd4"] .a4-modal .a4-modal-close {
+  color: #fff;
+}
+
+[data-app="sub-vue3-antd4"] .a4-modal .a4-modal-close:hover {
+  color: #fff;
+  opacity: 0.75;
+}
