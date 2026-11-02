@@ -1,6 +1,6 @@
 # qiankun 样式隔离不靠沙箱：4 条构建期规则管住 5 个应用的 CSS
 
-> 示例仓库：`qiankun-demo`（父应用 Vue3 + antd4，子应用 Vue3/Vue2 各两个，UI 库分别是 antd4、antd1、element-plus、element-ui）
+> 示例仓库：[jimchou-h/qiankun-demo](https://github.com/jimchou-h/qiankun-demo)（父应用 Vue3 + antd4，子应用 Vue3/Vue2 各两个，UI 库分别是 antd4、antd1、element-plus、element-ui）
 >
 > 本篇只讲样式隔离这一层：为什么不启用 qiankun 自带的 CSS 隔离、用构建期前缀怎么把 5 个应用的样式缝在一起、以及这套做法在真实项目里会撞上的 7 个坑。读者预设：写过 Vue、知道 PostCSS 是什么，不需要微前端入门。
 
